@@ -15,13 +15,21 @@ Plugin 'scrooloose/nerdtree'
 
 Plugin 'vim-airline/vim-airline'
 Plugin 'vim-airline/vim-airline-themes'
-let g:airline_theme='base16_bright'
-let g:airline#extensions#tabline#enabled = 1
-let g:airline#extensions#tabline#left_sep = ' '
-let g:airline#extensions#tabline#left_alt_sep = '|'
+set laststatus=2
+let g:airline_theme='base16_bright'						" set theme of airline
+let g:airline#extensions#tabline#enabled = 1			" enable tabline
+let g:airline#extensions#tabline#left_sep = ' '			" table line settings
+let g:airline#extensions#tabline#left_alt_sep = '|'		" table line settings
+let g:airline#extensions#branch#enabled = 1				" [fugitive] exntension. default is 0
+let g:airline#extensions#syntastic#enabled = 1			" [syntastic] extension. default is 1
 
 Plugin 'fugitive.vim'
-let g:airline#extensions#branch#enabled = 1
+
+Plugin 'vim-syntastic/syntastic'
+let g:syntastic_always_populate_loc_list = 1
+let g:syntastic_auto_loc_list = 1
+let g:syntastic_check_on_open = 1
+let g:syntastic_check_on_wq = 0
 "<<<======= user define
 
 " All of your Plugins must be added before the following line
@@ -60,7 +68,6 @@ set number		 " 設定行號
 " enable these if You need
 " set ai           " 自動縮排
 " set noexpandtab	" 不允許替代 tab (Makefile以tab作為區隔)
-set laststatus=2
 
 " according to file type to set indent
 filetype indent on
