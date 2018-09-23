@@ -11,25 +11,28 @@ call vundle#begin()
 Plugin 'VundleVim/Vundle.vim'
 
 "=======>>> user define
+" file expolorer
 Plugin 'scrooloose/nerdtree'
-
-Plugin 'vim-airline/vim-airline'
-Plugin 'vim-airline/vim-airline-themes'
-set laststatus=2
-let g:airline_theme='base16_bright'						" set theme of airline
-let g:airline#extensions#tabline#enabled = 1			" enable tabline
-let g:airline#extensions#tabline#left_sep = ' '			" table line settings
-let g:airline#extensions#tabline#left_alt_sep = '|'		" table line settings
-let g:airline#extensions#branch#enabled = 1				" [fugitive] exntension. default is 0
-let g:airline#extensions#syntastic#enabled = 1			" [syntastic] extension. default is 1
-
+" version control of code
 Plugin 'fugitive.vim'
-
+" complete code automatically
+Plugin 'Valloric/YouCompleteMe' 				" in ~/.vim/bundle/YouCompleteMe.  run ./install.py --clang-completer
+" syntax checker
 Plugin 'vim-syntastic/syntastic'
 let g:syntastic_always_populate_loc_list = 1
 let g:syntastic_auto_loc_list = 1
 let g:syntastic_check_on_open = 1
 let g:syntastic_check_on_wq = 0
+" status line of vim
+Plugin 'vim-airline/vim-airline'
+Plugin 'vim-airline/vim-airline-themes'
+set laststatus=2
+let g:airline_theme='base16_bright'				" set theme of airline
+let g:airline#extensions#tabline#enabled = 1			" enable tabline
+let g:airline#extensions#tabline#left_sep = ' '			" table line settings
+let g:airline#extensions#tabline#left_alt_sep = '|'		" table line settings
+let g:airline#extensions#branch#enabled = 1			" [fugitive] exntension. default is 0
+let g:airline#extensions#syntastic#enabled = 1			" [syntastic] extension. default is 1
 "<<<======= user define
 
 " All of your Plugins must be added before the following line
