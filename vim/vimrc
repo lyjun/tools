@@ -54,13 +54,14 @@ filetype plugin indent on    " required
 " Put your non-Plugin stuff after this line
 
 
-" 編輯喜好設定
-set ic           " 設定搜尋忽略大小寫
-set hlsearch     " 設定高亮度顯示搜尋結果
-set number	 " 設定行號
-set history=100  " 保留 100 個使用過的指令
-set incsearch    " 在關鍵字還沒完全輸入完畢前就顯示結果
-set confirm      " 操作過程有衝突時，以明確的文字來詢問
+" settings for all platforms (mac, linux)
+syntax on	 	" color for each language. e.g. C\C++, Makefile, etc.
+set ic           	" 設定搜尋忽略大小寫
+set hlsearch     	" 設定高亮度顯示搜尋結果
+set number	 	" 設定行號
+set history=100  	" 保留 100 個使用過的指令
+set incsearch    	" 在關鍵字還沒完全輸入完畢前就顯示結果
+set confirm      	" 操作過程有衝突時，以明確的文字來詢問
 "" enable these if You need
-"" set ai           " 自動縮排
+"" set ai           	" 自動縮排
 "" set noexpandtab	" 不允許替代 tab (Makefile以tab作為區隔)
