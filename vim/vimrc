@@ -17,6 +17,13 @@ Plugin 'scrooloose/nerdtree'
 Plugin 'fugitive.vim'
 " complete code automatically
 Plugin 'Valloric/YouCompleteMe' 				" in ~/.vim/bundle/YouCompleteMe.  run ./install.py --clang-completer
+let g:ycm_use_ultisnips_completer = 1
+" ultisnips 
+Plugin 'SirVer/ultisnips'   					" Track the engine.
+Plugin 'honza/vim-snippets' 					" Snippets are separated from the engine. Add this if you want them:
+let g:UltiSnipsExpandTrigger="<c-a>" 
+let g:UltiSnipsJumpForwardTrigger="<c-j>" 
+let g:UltiSnipsJumpBackwardTrigger="<c-k>" 
 " syntax checker
 Plugin 'vim-syntastic/syntastic'
 let g:syntastic_always_populate_loc_list = 1
