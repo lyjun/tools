@@ -11,6 +11,8 @@ call vundle#begin()
 Plugin 'VundleVim/Vundle.vim'
 
 "=======>>> user define
+" list difference between two files, blocks(lines)
+Plugin 'AndrewRadev/linediff.vim'
 " file expolorer
 Plugin 'scrooloose/nerdtree'
 " version control of code
@@ -69,6 +71,7 @@ set number	 	" 設定行號
 set history=100  	" 保留 100 個使用過的指令
 set incsearch    	" 在關鍵字還沒完全輸入完畢前就顯示結果
 set confirm      	" 操作過程有衝突時，以明確的文字來詢問
+set bg=dark             " imporve readable
 "" enable these if You need
 "" set ai           	" 自動縮排
 "" set noexpandtab	" 不允許替代 tab (Makefile以tab作為區隔)
