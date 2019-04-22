@@ -15,6 +15,7 @@ Plugin 'VundleVim/Vundle.vim'
 Plugin 'AndrewRadev/linediff.vim'
 " file expolorer
 Plugin 'scrooloose/nerdtree'
+let NERDTreeShowHidden=1
 " version control of code
 Plugin 'fugitive.vim'
 " complete code automatically
@@ -45,6 +46,7 @@ let g:airline#extensions#tabline#left_sep = ' '			" table line settings
 let g:airline#extensions#tabline#left_alt_sep = '|'		" table line settings
 let g:airline#extensions#branch#enabled = 1			" [fugitive] exntension. default is 0
 let g:airline#extensions#syntastic#enabled = 1			" [syntastic] extension. default is 1
+
 "<<<======= user define
 
 " All of your Plugins must be added before the following line
