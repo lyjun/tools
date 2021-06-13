@@ -11,42 +11,27 @@ call vundle#begin()
 Plugin 'VundleVim/Vundle.vim'
 
 "=======>>> user define
+" yaml format
+Plugin 'stephpy/vim-yaml'
 " list difference between two files, blocks(lines)
 Plugin 'AndrewRadev/linediff.vim'
 " file expolorer
 Plugin 'scrooloose/nerdtree'
-let NERDTreeShowHidden=1
 " version control of code
 Plugin 'fugitive.vim'
-" complete code automatically
-Plugin 'Valloric/YouCompleteMe' 				" in ~/.vim/bundle/YouCompleteMe.  run ./install.py --clang-completer
-let g:ycm_use_ultisnips_completer = 1
-" ultisnips 
-Plugin 'SirVer/ultisnips'   					" Track the engine.
-Plugin 'honza/vim-snippets' 					" Snippets are separated from the engine. Add this if you want them:
-let g:UltiSnipsExpandTrigger="<c-a>" 
-let g:UltiSnipsJumpForwardTrigger="<c-j>" 
-let g:UltiSnipsJumpBackwardTrigger="<c-k>" 
-" syntax checker
-Plugin 'vim-syntastic/syntastic'
-let g:syntastic_always_populate_loc_list = 1
-let g:syntastic_auto_loc_list = 1
-let g:syntastic_check_on_open = 1
-let g:syntastic_check_on_wq = 0
-" add indent guide
-Plugin 'Yggdroot/indentLine'
-let g:indentLine_color_term = 111
+" golagn
+Plugin 'fatih/vim-go'
+" ultisnips
+Plugin 'SirVer/ultisnips'
+" ctrlp - Full path fuzzy file, buffer, mru, tag, ... finder for Vim.
+Plugin 'ctrlpvim/ctrlp.vim'
+" splitjon
+Plugin 'AndrewRadev/splitjoin.vim'
+" python
+Plugin 'python-mode/python-mode'
 " status line of vim
 Plugin 'vim-airline/vim-airline'
 Plugin 'vim-airline/vim-airline-themes'
-set laststatus=2
-let g:airline_theme='base16_bright'				" set theme of airline
-let g:airline#extensions#tabline#enabled = 1			" enable tabline
-let g:airline#extensions#tabline#left_sep = ' '			" table line settings
-let g:airline#extensions#tabline#left_alt_sep = '|'		" table line settings
-let g:airline#extensions#branch#enabled = 1			" [fugitive] exntension. default is 0
-let g:airline#extensions#syntastic#enabled = 1			" [syntastic] extension. default is 1
-
 "<<<======= user define
 
 " All of your Plugins must be added before the following line
@@ -64,17 +49,55 @@ filetype plugin indent on    " required
 " see :h vundle for more details or wiki for FAQ
 " Put your non-Plugin stuff after this line
 
+" ##### Custom - Plugin setting
+" Plugin - vim-go
+let g:go_fmt_command = "goimports"
+let g:go_addtags_transform = "camelcase"                " snake_case or camelcase
+let g:go_highlight_types = 1                            " a limited syntax highlighting 
+let g:go_highlight_fields = 1
+let g:go_highlight_functions = 1
+let g:go_highlight_function_calls = 1
+let g:go_highlight_operators = 1
+let g:go_highlight_extra_types = 1
+let g:go_highlight_build_constraints = 1
+" Plugin - nerotree
+let g:NERDTreeNodeDelimiter = "\u00a0"
+" Plugin - vim-airline
+set laststatus=2
+let g:airline_theme='base16_bright'				        " set theme of airline
+let g:airline#extensions#tabline#enabled = 1			" enable tabline
+let g:airline#extensions#tabline#left_sep = ' '			" table line settings
+let g:airline#extensions#tabline#left_alt_sep = '|'		" table line settings
+let g:airline#extensions#branch#enabled = 1			    " [fugitive] exntension. default is 0
+" Plugin - python-mode
+"          Install one of `pylint`, `pep257`, `pep8`, `pyflakes`, `mccabe` to
+"          check ocde.
+let g:pymode = 1                                        " Turn on the whole plugin.
+let g:pymode_lint_on_fly = 1                            " Check code when editing (on the fly)     
+let g:pymode_lint_unmodified = 1                        " Check code on every save (every) 
+let g:pymode_trim_whitespaces = 1                       " Trim unused white spaces on save.
+let g:pymode_options_colorcolumn = 0
 
-" settings for all platforms (mac, linux)
-syntax on	 	" color for each language. e.g. C\C++, Makefile, etc.
-set ic           	" 設定搜尋忽略大小寫
-set hlsearch     	" 設定高亮度顯示搜尋結果
-set number	 	" 設定行號
+" ##### Custom setting
+" general settings
+syntax on	 	    " color for each language. e.g. C\C++, Makefile, etc.
+set number	 	    " 設定行號
 set history=100  	" 保留 100 個使用過的指令
-set incsearch    	" 在關鍵字還沒完全輸入完畢前就顯示結果
 set confirm      	" 操作過程有衝突時，以明確的文字來詢問
-set bg=dark             " imporve readable
+set bg=dark         " imporve readable
 set encoding=utf-8
-"" enable these if You need
-"" set ai           	" 自動縮排
-"" set noexpandtab	" 不允許替代 tab (Makefile以tab作為區隔)
+" Make search case insensitive
+set hlsearch        " 設定高亮度顯示搜尋結果
+set incsearch    	" 在關鍵字還沒完全輸入完畢前就顯示結果
+set ignorecase     	" 設定搜尋忽略大小寫
+set smartcase       " 字串都小寫表示 ic
+" Real programmers don't use TABs but spaces
+set tabstop=4
+set softtabstop=4
+set shiftwidth=4
+set shiftround
+set expandtab
+" Disable stupid backup and swap files
+set nobackup
+set nowritebackup
+set noswapfile
