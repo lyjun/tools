@@ -60,6 +60,7 @@ let g:go_highlight_function_calls = 1
 let g:go_highlight_operators = 1
 let g:go_highlight_extra_types = 1
 let g:go_highlight_build_constraints = 1
+au filetype go inoremap <buffer> . .<C-x><C-o>
 " Plugin - nerotree
 let g:NERDTreeNodeDelimiter = "\u00a0"
 " Plugin - vim-airline
