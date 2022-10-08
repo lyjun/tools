@@ -1,80 +1,63 @@
-set nocompatible              " be iMproved, required
-filetype off                  " required
+" [[ Plug-in ]]
+call plug#begin()
 
-" set the runtime path to include Vundle and initialize
-set rtp+=~/.vim/bundle/Vundle.vim
-call vundle#begin()
-" alternatively, pass a path where Vundle should install plugins
-"call vundle#begin('~/some/path/here')
+" [ File Management ]
+Plug 'preservim/nerdtree', { 'on':  'NERDTreeToggle' }
 
-" let Vundle manage Vundle, required
-Plugin 'VundleVim/Vundle.vim'
+" [ View ]
+Plug 'vim-airline/vim-airline'
+Plug 'vim-airline/vim-airline-themes'
 
-"=======>>> user define
-" list difference between two files, blocks(lines)
-Plugin 'AndrewRadev/linediff.vim'
-" file expolorer
-Plugin 'scrooloose/nerdtree'
-let NERDTreeShowHidden=1
-" version control of code
-Plugin 'fugitive.vim'
-" complete code automatically
-Plugin 'Valloric/YouCompleteMe' 				" in ~/.vim/bundle/YouCompleteMe.  run ./install.py --clang-completer
-let g:ycm_use_ultisnips_completer = 1
-" ultisnips 
-Plugin 'SirVer/ultisnips'   					" Track the engine.
-Plugin 'honza/vim-snippets' 					" Snippets are separated from the engine. Add this if you want them:
-let g:UltiSnipsExpandTrigger="<c-a>" 
-let g:UltiSnipsJumpForwardTrigger="<c-j>" 
-let g:UltiSnipsJumpBackwardTrigger="<c-k>" 
-" syntax checker
-Plugin 'vim-syntastic/syntastic'
-let g:syntastic_always_populate_loc_list = 1
-let g:syntastic_auto_loc_list = 1
-let g:syntastic_check_on_open = 1
-let g:syntastic_check_on_wq = 0
-" add indent guide
-Plugin 'Yggdroot/indentLine'
-let g:indentLine_color_term = 111
-" status line of vim
-Plugin 'vim-airline/vim-airline'
-Plugin 'vim-airline/vim-airline-themes'
-set laststatus=2
-let g:airline_theme='base16_bright'				" set theme of airline
-let g:airline#extensions#tabline#enabled = 1			" enable tabline
-let g:airline#extensions#tabline#left_sep = ' '			" table line settings
-let g:airline#extensions#tabline#left_alt_sep = '|'		" table line settings
-let g:airline#extensions#branch#enabled = 1			" [fugitive] exntension. default is 0
-let g:airline#extensions#syntastic#enabled = 1			" [syntastic] extension. default is 1
+" [ Code ]
+Plug 'fatih/vim-go', { 'for': 'go', 'do': ':GoUpdateBinaries' }
+Plug 'python-mode/python-mode', { 'for': 'python', 'branch': 'develop' }
 
-"<<<======= user define
-
-" All of your Plugins must be added before the following line
-call vundle#end()            " required
-filetype plugin indent on    " required
-" To ignore plugin indent changes, instead use:
-"filetype plugin on
+" [ Productivity & Automation ]
+Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }
+Plug 'junegunn/fzf.vim'
 "
-" Brief help
-" :PluginList       - lists configured plugins
-" :PluginInstall    - installs plugins; append `!` to update or just :PluginUpdate
-" :PluginSearch foo - searches for foo; append `!` to refresh local cache
-" :PluginClean      - confirms removal of unused plugins; append `!` to auto-approve removal
+Plug 'SirVer/ultisnips'
+Plug 'honza/vim-snippets'
 "
-" see :h vundle for more details or wiki for FAQ
-" Put your non-Plugin stuff after this line
+Plug 'ycm-core/YouCompleteMe'
+
+" [ Version Control ]
+Plug 'tpope/vim-fugitive'
+
+call plug#end()
 
 
-" settings for all platforms (mac, linux)
-syntax on	 	" color for each language. e.g. C\C++, Makefile, etc.
-set ic           	" 設定搜尋忽略大小寫
-set hlsearch     	" 設定高亮度顯示搜尋結果
-set number	 	" 設定行號
-set history=100  	" 保留 100 個使用過的指令
-set incsearch    	" 在關鍵字還沒完全輸入完畢前就顯示結果
-set confirm      	" 操作過程有衝突時，以明確的文字來詢問
-set bg=dark             " imporve readable
-set encoding=utf-8
-"" enable these if You need
-"" set ai           	" 自動縮排
-"" set noexpandtab	" 不允許替代 tab (Makefile以tab作為區隔)
+" [[ settings ]]
+" [ General ]
+set number
+syntax on
+filetype on
+filetype plugin on
+filetype indent on
+" Enable auto completion menu after pressing TAB.
+set wildmenu
+set wildmode=list:longest
+" Make search case insensitive
+set hlsearch
+set incsearch
+set ignorecase
+set smartcase
+" Real programmers don't use TABs but spaces
+set tabstop=4
+set softtabstop=4
+set shiftwidth=4
+set shiftround
+set expandtab
+
+
+" [ Plug-in setting ]
+" airline
+let g:airline_theme='fruit_punch'
+" vim-go
+
+" [ Plug-in map ]
+" Nerdtree
+nnoremap <C-n> :NERDTree<CR>
+" Fzf
+nnoremap <C-s> :Files<CR>
+nnoremap <C-l> :Lines<CR>
