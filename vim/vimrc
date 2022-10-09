@@ -49,15 +49,28 @@ set shiftwidth=4
 set shiftround
 set expandtab
 
-
 " [ Plug-in setting ]
 " airline
 let g:airline_theme='fruit_punch'
-" vim-go
 
-" [ Plug-in map ]
 " Nerdtree
 nnoremap <C-n> :NERDTree<CR>
+
 " Fzf
 nnoremap <C-c> :Files<CR>
 nnoremap <C-l> :Lines<CR>
+
+" ultisnips
+"   Trigger configuration. You need to change this to something other than <tab> if you use one of the following:
+"   - https://github.com/Valloric/YouCompleteMe
+"   - https://github.com/nvim-lua/completion-nvim
+let g:UltiSnipsExpandTrigger="<c-o>"
+let g:UltiSnipsJumpForwardTrigger="<c-b>"
+let g:UltiSnipsJumpBackwardTrigger="<c-z>"
+"   If you want :UltiSnipsEdit to split your window.
+let g:UltiSnipsEditSplit="vertical"
+
+
+" [[ Extra setting based on platform ]]
+" - linux
+"colorscheme torte
