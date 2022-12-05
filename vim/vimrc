@@ -1,104 +1,79 @@
-set nocompatible              " be iMproved, required
-filetype off                  " required
+" [[ Plug-in ]]
+call plug#begin()
 
-" set the runtime path to include Vundle and initialize
-set rtp+=~/.vim/bundle/Vundle.vim
-call vundle#begin()
-" alternatively, pass a path where Vundle should install plugins
-"call vundle#begin('~/some/path/here')
+" [ File Management ]
+Plug 'preservim/nerdtree', { 'on':  'NERDTreeToggle' }
 
-" let Vundle manage Vundle, required
-Plugin 'VundleVim/Vundle.vim'
+" [ View ]
+Plug 'vim-airline/vim-airline'
+Plug 'vim-airline/vim-airline-themes'
 
-"=======>>> user define
-" yaml format
-Plugin 'stephpy/vim-yaml'
-" list difference between two files, blocks(lines)
-Plugin 'AndrewRadev/linediff.vim'
-" file expolorer
-Plugin 'scrooloose/nerdtree'
-" version control of code
-Plugin 'fugitive.vim'
-" golagn
-Plugin 'fatih/vim-go'
-" ultisnips
-Plugin 'SirVer/ultisnips'
-" ctrlp - Full path fuzzy file, buffer, mru, tag, ... finder for Vim.
-Plugin 'ctrlpvim/ctrlp.vim'
-" splitjon
-Plugin 'AndrewRadev/splitjoin.vim'
-" python
-Plugin 'python-mode/python-mode'
-" status line of vim
-Plugin 'vim-airline/vim-airline'
-Plugin 'vim-airline/vim-airline-themes'
-"<<<======= user define
+" [ Code ]
+Plug 'fatih/vim-go', { 'for': 'go', 'do': ':GoUpdateBinaries' }
+Plug 'python-mode/python-mode', { 'for': 'python', 'branch': 'develop' }
 
-" All of your Plugins must be added before the following line
-call vundle#end()            " required
-filetype plugin indent on    " required
-" To ignore plugin indent changes, instead use:
-"filetype plugin on
+" [ Productivity & Automation ]
+Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }
+Plug 'junegunn/fzf.vim'
 "
-" Brief help
-" :PluginList       - lists configured plugins
-" :PluginInstall    - installs plugins; append `!` to update or just :PluginUpdate
-" :PluginSearch foo - searches for foo; append `!` to refresh local cache
-" :PluginClean      - confirms removal of unused plugins; append `!` to auto-approve removal
+Plug 'SirVer/ultisnips'
+Plug 'honza/vim-snippets'
 "
-" see :h vundle for more details or wiki for FAQ
-" Put your non-Plugin stuff after this line
+Plug 'ycm-core/YouCompleteMe'
 
-" ##### Custom - Plugin setting
-" Plugin - vim-go
-let g:go_fmt_command = "goimports"
-let g:go_addtags_transform = "camelcase"                " snake_case or camelcase
-let g:go_highlight_types = 1                            " a limited syntax highlighting 
-let g:go_highlight_fields = 1
-let g:go_highlight_functions = 1
-let g:go_highlight_function_calls = 1
-let g:go_highlight_operators = 1
-let g:go_highlight_extra_types = 1
-let g:go_highlight_build_constraints = 1
-au filetype go inoremap <buffer> . .<C-x><C-o>
-" Plugin - nerotree
-let g:NERDTreeNodeDelimiter = "\u00a0"
-" Plugin - vim-airline
-set laststatus=2
-let g:airline_theme='base16_bright'				        " set theme of airline
-let g:airline#extensions#tabline#enabled = 1			" enable tabline
-let g:airline#extensions#tabline#left_sep = ' '			" table line settings
-let g:airline#extensions#tabline#left_alt_sep = '|'		" table line settings
-let g:airline#extensions#branch#enabled = 1			    " [fugitive] exntension. default is 0
-" Plugin - python-mode
-"          Install one of `pylint`, `pep257`, `pep8`, `pyflakes`, `mccabe` to
-"          check ocde.
-let g:pymode = 1                                        " Turn on the whole plugin.
-let g:pymode_lint_on_fly = 1                            " Check code when editing (on the fly)     
-let g:pymode_lint_unmodified = 1                        " Check code on every save (every) 
-let g:pymode_trim_whitespaces = 1                       " Trim unused white spaces on save.
-let g:pymode_options_colorcolumn = 0
+" [ Version Control ]
+Plug 'tpope/vim-fugitive'
 
-" ##### Custom setting
-" general settings
-syntax on	 	    " color for each language. e.g. C\C++, Makefile, etc.
-set number	 	    " 設定行號
-set history=100  	" 保留 100 個使用過的指令
-set confirm      	" 操作過程有衝突時，以明確的文字來詢問
-set bg=dark         " imporve readable
-set encoding=utf-8
+call plug#end()
+
+
+" [[ settings ]]
+" [ General ]
+set number
+syntax on
+filetype on
+filetype plugin on
+filetype indent on
+" Enable auto completion menu after pressing TAB.
+set wildmenu
+set wildmode=list:longest
 " Make search case insensitive
-set hlsearch        " 設定高亮度顯示搜尋結果
-set incsearch    	" 在關鍵字還沒完全輸入完畢前就顯示結果
-set ignorecase     	" 設定搜尋忽略大小寫
-set smartcase       " 字串都小寫表示 ic
+set hlsearch
+set incsearch
+set ignorecase
+set smartcase
 " Real programmers don't use TABs but spaces
 set tabstop=4
 set softtabstop=4
-set shiftwidth=4
+set shiftwidth=4            " Number of spaces to use for each step of (auto)indent.
 set shiftround
 set expandtab
-" Disable stupid backup and swap files
-set nobackup
-set nowritebackup
-set noswapfile
+
+" [ built-in ]
+
+" [ Plug-in setting ]
+" airline
+let g:airline_theme='fruit_punch'
+
+" Nerdtree
+nnoremap <C-n> :NERDTree<CR>
+
+" Fzf
+nnoremap <C-c> :Files<CR>
+nnoremap <C-l> :Lines<CR>
+nnoremap <C-x> :Rg<CR>
+
+" ultisnips
+"   Trigger configuration. You need to change this to something other than <tab> if you use one of the following:
+"   - https://github.com/Valloric/YouCompleteMe
+"   - https://github.com/nvim-lua/completion-nvim
+let g:UltiSnipsExpandTrigger="<c-o>"
+let g:UltiSnipsJumpForwardTrigger="<c-b>"
+let g:UltiSnipsJumpBackwardTrigger="<c-z>"
+"   If you want :UltiSnipsEdit to split your window.
+let g:UltiSnipsEditSplit="vertical"
+
+
+" [[ Extra setting based on platform ]]
+" - linux
+"colorscheme torte
