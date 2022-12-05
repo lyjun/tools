@@ -45,9 +45,11 @@ set smartcase
 " Real programmers don't use TABs but spaces
 set tabstop=4
 set softtabstop=4
-set shiftwidth=4
+set shiftwidth=4            " Number of spaces to use for each step of (auto)indent.
 set shiftround
 set expandtab
+
+" [ built-in ]
 
 " [ Plug-in setting ]
 " airline
@@ -59,6 +61,7 @@ nnoremap <C-n> :NERDTree<CR>
 " Fzf
 nnoremap <C-c> :Files<CR>
 nnoremap <C-l> :Lines<CR>
+nnoremap <C-x> :Rg<CR>
 
 " ultisnips
 "   Trigger configuration. You need to change this to something other than <tab> if you use one of the following:
