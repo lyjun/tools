@@ -9,7 +9,7 @@ Plug 'vim-airline/vim-airline'
 Plug 'vim-airline/vim-airline-themes'
 
 " [ Code ]
-Plug 'fatih/vim-go', { 'for': 'go', 'do': ':GoUpdateBinaries' }
+Plug 'fatih/vim-go'
 Plug 'python-mode/python-mode', { 'for': 'python', 'branch': 'develop' }
 
 " [ Productivity & Automation ]
@@ -29,6 +29,7 @@ call plug#end()
 
 " [[ settings ]]
 " [ General ]
+set encoding=utf-8
 set number
 syntax on
 filetype on
@@ -73,6 +74,12 @@ let g:UltiSnipsJumpBackwardTrigger="<c-z>"
 "   If you want :UltiSnipsEdit to split your window.
 let g:UltiSnipsEditSplit="vertical"
 
+" YCM
+let g:ycm_autoclose_preview_window_after_completion = 1   " close preview windown
+
+" vim-go
+let g:go_doc_balloon = 1
+let g:go_doc_popup_window = 1
 
 " [[ Extra setting based on platform ]]
 " - linux
