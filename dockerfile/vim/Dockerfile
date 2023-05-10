@@ -7,6 +7,7 @@ ARG GID=1000
 ARG USER=ubuntu
 # go
 ARG GO_VERSION=1.20.4
+ARG WK_DIR=/Workspace
 
 
 FROM ubuntu:latest
@@ -16,6 +17,7 @@ ARG GID
 ARG USER
 ARG ARCH
 ARG GO_VERSION
+ARG WK_DIR
 
 ## set up for system
 # pkg
@@ -42,7 +44,8 @@ RUN \
 
 # set up for developer (workaround for executing sudo)
 RUN \
-  useradd -m -s /bin/bash -u $UID -g $GID -G sudo $USER \
+  getent group $GID || groupadd -g $GID $USER \
+  && useradd -m -s /bin/bash -u $UID -g $GID -G sudo $USER \
   && echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 
 ## vim for user
@@ -62,3 +65,5 @@ RUN \
   echo "export LC_ALL=en_US.UTF-8" >> /home/$USER/.bashrc \
   && echo "export GOPATH=/home/$USER/go" >> /home/$USER/.bashrc \
   && echo 'export PATH=$PATH:/usr/local/go/bin:$(go env GOPATH)/bin' >> /home/$USER/.bashrc
+
+WORKDIR $WK_DIR

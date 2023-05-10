@@ -61,8 +61,8 @@ nnoremap <C-n> :NERDTree<CR>
 
 " Fzf
 nnoremap <C-c> :Files<CR>
-nnoremap <C-l> :Lines<CR>
 nnoremap <C-x> :Rg<CR>
+"nnoremap <C-l> :Lines<CR>
 
 " ultisnips
 "   Trigger configuration. You need to change this to something other than <tab> if you use one of the following:
