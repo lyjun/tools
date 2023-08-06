@@ -24,6 +24,9 @@ Plug 'ycm-core/YouCompleteMe'
 " [ Version Control ]
 Plug 'tpope/vim-fugitive'
 
+" [ Misc ]
+" change working dicrectory automatically
+Plug 'airblade/vim-rooter'
 call plug#end()
 
 
@@ -80,6 +83,11 @@ let g:ycm_autoclose_preview_window_after_completion = 1   " close preview window
 " vim-go
 let g:go_doc_balloon = 1
 let g:go_doc_popup_window = 1
+
+" vim-rooter
+let g:rooter_cd_cmd = 'lcd'
+let g:rooter_patterns = ['.git']    " Identify a root directory
+let g:rooter_targets = '/,*'        " Everything (default)
 
 " [[ Extra setting based on platform ]]
 " - linux
