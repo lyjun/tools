@@ -1,6 +1,9 @@
 return {
+    --[[
+    A completion engine plugin for neovim written in Lua. Completion sources are installed from external repositories and "sourced".
+    --]]
     "hrsh7th/nvim-cmp",
-    dependencies = { 
+    dependencies = {
         'hrsh7th/cmp-nvim-lsp',
         'hrsh7th/cmp-buffer',
         'hrsh7th/cmp-path',
@@ -66,13 +69,21 @@ return {
             capabilities = capabilities,
         }
 
+        require('lspconfig')['cmake'].setup {
+            capabilities = capabilities,
+        }
+
         require('lspconfig')['bashls'].setup {
             capabilities = capabilities,
         }
 
-        --require('lspconfig')['clangd'].setup {
-        --    capabilities = capabilities,
-        --}
+        require('lspconfig')['clangd'].setup {
+            capabilities = capabilities,
+        }
+
+        require('lspconfig')['docker_compose_language_service'].setup {
+            capabilities = capabilities,
+        }
 
         require('lspconfig')['gopls'].setup {
             capabilities = capabilities,
@@ -82,7 +93,23 @@ return {
             capabilities = capabilities,
         }
 
+        require('lspconfig')['jsonls'].setup {
+            capabilities = capabilities,
+        }
+
         require('lspconfig')['pylsp'].setup {
+            capabilities = capabilities,
+        }
+
+        require('lspconfig')['marksman'].setup {
+            capabilities = capabilities,
+        }
+
+        require('lspconfig')['harper_ls'].setup {
+            capabilities = capabilities,
+        }
+
+        require('lspconfig')['yamlls'].setup {
             capabilities = capabilities,
         }
     end

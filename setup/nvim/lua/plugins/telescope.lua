@@ -1,6 +1,6 @@
 return {
     --[[
-    don't forget to install "ripgrep"
+    telescope.nvim is a highly extendable fuzzy finder over lists
     --]]
     'nvim-telescope/telescope.nvim',
     tag = '0.1.8',

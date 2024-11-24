@@ -1,14 +1,19 @@
 return {
     --[[
-    1. set your filetypes with spefific formmatters above. Otherwise, it will pick one automatically.
-    2. All formmatters can be installed via mason plugin.
-    3. Check formatter with conform via executing ":ConformInfo"
-    ]] --
+    formatter plugin (it is not integrated with mason)
+
+    1. All formmatters can be installed via mason plugin.
+    2. Check formatter with conform via executing ":ConformInfo"
+    --]]
     'stevearc/conform.nvim',
     opts = {},
     config = function()
         require("conform").setup({
             formatters_by_ft = {
+                --[[
+                  If you want specify formmatters for the language, revise these settings.
+                  Otherwise, it will pick one automatically.
+                --]]
                 -- go = { "goimports", "gofmt" },
                 -- java = { "google-java-format" },
                 -- lua = { "stylua" },
