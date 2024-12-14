@@ -18,33 +18,45 @@ return {
     },
     config = function()
         require("mason").setup()
+
+        -- common LSP servers
+        lspLangs = {
+            -- [[ LSP ]]
+            "autotools_ls",
+            "cmake",
+            -- [ bash language ]
+            "bashls",
+            -- [ C & C++ language ]
+            "clangd",
+            -- [ docker language ]
+            "docker_compose_language_service",
+            -- [ golang language ]
+            "gopls",
+            -- [ lua language ]
+            "lua_ls",
+            -- [ json language ]
+            "jsonls",
+            -- [ python language ]
+            "pylsp",
+            -- [ markdown language ]
+            "marksman",
+            -- [ toml language ]
+            "harper_ls",
+            -- [ YAML language]
+            "yamlls",
+        }
+
+        osType = vim.loop.os_uname().sysname
+        if (osType == "Darwin") then
+            -- for macos
+            --table.insert(lspLangs, "")
+        elseif (osType == "Linux") then
+            -- for linux
+            -- table.insert(lspLangs, "")
+        end
+
         require("mason-lspconfig").setup {
-            ensure_installed = {
-                -- [[ LSP ]]
-                -- [ make & cmake language ]
-                "autotools_ls",
-                "cmake",
-                -- [ bash language ]
-                "bashls",
-                -- [ C & C++ language ]
-                "clangd",
-                -- [ docker language ]
-                "docker_compose_language_service",
-                -- [ golang language ]
-                "gopls",
-                -- [ lua language ]
-                "lua_ls",
-                -- [ json language ]
-                "jsonls",
-                -- [ python language ]
-                "pylsp",
-                -- [ markdown language ]
-                "marksman",
-                -- [ toml language ]
-                "harper_ls",
-                -- [ YAML language]
-                "yamlls",
-            },
+            ensure_installed = lspLangs,
         }
     end
 }
