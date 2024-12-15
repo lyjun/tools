@@ -17,5 +17,11 @@ return {
         -- vim pickers
         vim.keymap.set('n', '<leader>vm', builtin.man_pages, {})
         vim.keymap.set('n', '<leader>vc', builtin.commands, {})
+
+        -- lsp pickers
+        vim.keymap.set('n', '<leader>lr', builtin.lsp_references, {})
+
+        -- git pickers
+        vim.keymap.set('n', '<leader>gb', builtin.git_branches, {})
     end
 }
