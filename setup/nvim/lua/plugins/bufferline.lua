@@ -1,4 +1,7 @@
 return {
+    --[[
+    tabline plugin. It add status, file type for each tab.
+    --]]
     'akinsho/bufferline.nvim',
     version = "*",
     dependencies = {

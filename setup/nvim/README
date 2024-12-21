@@ -30,3 +30,6 @@ revise auto completion for your language server(lsp) if you need
 1. integrate lint with mason
 2. formatters install via mason or manully from mason UI
 3. (?)use other git plugin instead of net-git
+4. DAP add this feature(?)
+   - https://github.com/rcarriga/nvim-dap-ui
+   - https://github.com/mfussenegger/nvim-dap
