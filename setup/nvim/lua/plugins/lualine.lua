@@ -11,8 +11,8 @@ return {
             },
             extensions = {
                 "lazy",
-                "neo-tree",
                 "mason",
+                "neo-tree",
                 "toggleterm", "trouble",
             },
         })
