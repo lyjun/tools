@@ -1,16 +1,24 @@
 return {
     --[[
     A completion engine plugin for neovim written in Lua. Completion sources are installed from external repositories and "sourced".
+    If you choose a snip, you also update "dependencies package", snippet config and sources.
     --]]
     "hrsh7th/nvim-cmp",
     dependencies = {
+        'neovim/nvim-lspconfig',
         'hrsh7th/cmp-nvim-lsp',
         'hrsh7th/cmp-buffer',
         'hrsh7th/cmp-path',
         'hrsh7th/cmp-cmdline',
+        -- XXX: Set your snip package
+        --[[
         -- For ultisnips users
         'SirVer/ultisnips',
         'quangnguyen30192/cmp-nvim-ultisnips',
+        --]]
+        -- For luasnip users
+        'L3MON4D3/LuaSnip',
+        'saadparwaiz1/cmp_luasnip',
     },
     config = function()
         -- Set up nvim-cmp.
@@ -18,9 +26,11 @@ return {
 
         cmp.setup {
             snippet = {
+                -- XXX: Set your snip package
                 -- REQUIRED - you must specify a snippet engine
                 expand = function(args)
-                    vim.fn["UltiSnips#Anon"](args.body) -- For `ultisnips` users.
+                    -- vim.fn["UltiSnips#Anon"](args.body) -- For `ultisnips` users.
+                    require('luasnip').lsp_expand(args.body) -- For `luasnip` users.
                 end,
             },
             window = {
@@ -28,6 +38,7 @@ return {
                 documentation = cmp.config.window.bordered(),
             },
             mapping = cmp.mapping.preset.insert({
+                -- Control tips windows of snip
                 ['<C-b>'] = cmp.mapping.scroll_docs(-4),
                 ['<C-f>'] = cmp.mapping.scroll_docs(4),
                 ['<C-Space>'] = cmp.mapping.complete(),
@@ -36,7 +47,9 @@ return {
             }),
             sources = cmp.config.sources({
                 { name = 'nvim_lsp' },
-                { name = 'ultisnips' }, -- For ultisnips users.
+                -- XXX: Set your snip package
+                -- { name = 'ultisnips' }, -- For ultisnips users.
+                { name = 'luasnip' }, -- For luasnip users.
             }, {
                 { name = 'buffer' },
             }),
@@ -102,10 +115,6 @@ return {
         }
 
         require('lspconfig')['marksman'].setup {
-            capabilities = capabilities,
-        }
-
-        require('lspconfig')['harper_ls'].setup {
             capabilities = capabilities,
         }
 

@@ -40,8 +40,6 @@ return {
             "pylsp",
             -- [ markdown language ]
             "marksman",
-            -- [ toml language ]
-            "harper_ls",
             -- [ YAML language]
             "yamlls",
         }
