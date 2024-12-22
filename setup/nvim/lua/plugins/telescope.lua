@@ -28,9 +28,5 @@ return {
             { desc = "Lists LSP references for word under the cursor" })
         vim.keymap.set('n', '<leader>ld', builtin.diagnostics,
             { desc = "Lists Diagnostics for all open buffers or a specific buffer" })
-
-        -- git pickers
-        vim.keymap.set('n', '<leader>gb', builtin.git_branches,
-            { desc = "Lists all branches with log preview, checkout action <cr>..." })
     end
 }
