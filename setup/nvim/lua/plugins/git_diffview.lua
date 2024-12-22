@@ -8,6 +8,7 @@ return {
 
     config = function()
         require("diffview").setup()
-        vim.keymap.set("n", "<leader>gd", ":DiffviewOpen<CR>", { silent = true })
+        vim.keymap.set("n", "<leader>gd", ":DiffviewOpen<CR>",
+            { silent = true, desc = "opens a new Diffview that compares against the current index" })
     end
 }
