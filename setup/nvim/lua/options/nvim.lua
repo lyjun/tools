@@ -7,6 +7,8 @@ vim.o.encoding = "utf-8"
 vim.o.number = true
 vim.o.syntax = "on"
 vim.o.filetype = "on"
+-- appear
+vim.opt.laststatus = 3 -- views can only be fully collapsed with the global statusline
 -- Enable auto completion menu after pressing TAB.
 vim.o.wildmenu = true
 vim.o.wildmode = "list:longest"
