@@ -3,7 +3,7 @@ return {
     don't forget to execute "TSUpdate" or install launquage with "TSInstall ${lang}"
     --]]
     "nvim-treesitter/nvim-treesitter",
-    cmd = { "TSUpdate" },
+    build = ':TSUpdate',
     config = function()
         require("nvim-treesitter.configs").setup({
             -- A list of parser names, or "all" (the five listed parsers should always be installed)

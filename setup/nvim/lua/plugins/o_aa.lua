@@ -7,6 +7,7 @@ return {
     1. setup your provdie. default is "claude". (I had revise configuration for provide copilot)
 
     --]]
+    enabled = false,
     "yetone/avante.nvim",
     event = "VeryLazy",
     lazy = false,
