@@ -10,51 +10,52 @@ return {
       Linters: null-ls.nvim or nvim-lint
       Formatters: null-ls.nvim or formatter.nvim
     --]]
-    "williamboman/mason.nvim",
+    "mason-org/mason-lspconfig.nvim",
+    opts = {},
     dependencies = {
         {
-            "williamboman/mason-lspconfig.nvim"
-        }
+            "mason-org/mason.nvim",
+            opts = {},
+        },
+        "neovim/nvim-lspconfig",
     },
     config = function()
-        require("mason").setup()
-
         -- common LSP servers
-        lspLangs = {
+        -- XXX: remember to revise nvim-cmp for auto-completion
+        custom_lsp_lang = {
             -- [[ LSP ]]
             "autotools_ls",
             "cmake",
             -- [ bash language ]
+            -- extra - lint: shellcheck, format: shfmt
             "bashls",
             -- [ C & C++ language ]
             "clangd",
             -- [ docker language ]
+            "dockerls",
             "docker_compose_language_service",
             -- [ golang language ]
+            -- extra - lint: golangci-lint, format: goimports
             "gopls",
             -- [ lua language ]
             "lua_ls",
             -- [ json language ]
             "jsonls",
-            -- [ python language ]
-            "pylsp",
             -- [ markdown language ]
             "marksman",
+            -- [ python language ]
+            -- extra - lint: ruff , format:
+            "pyright",
+            -- [TOML language]
+            "taplo",
             -- [ YAML language]
             "yamlls",
         }
 
-        osType = vim.loop.os_uname().sysname
-        if (osType == "Darwin") then
-            -- for macos
-            --table.insert(lspLangs, "")
-        elseif (osType == "Linux") then
-            -- for linux
-            -- table.insert(lspLangs, "")
-        end
-
         require("mason-lspconfig").setup {
-            ensure_installed = lspLangs,
+            ensure_installed = custom_lsp_lang,
+            -- avoid duplicate lsp client. the neovim/nvim-lspconfig will auto start lsp client
+            automatic_enable = false,
         }
     end
 }

@@ -11,12 +11,16 @@ return {
         require("conform").setup({
             formatters_by_ft = {
                 --[[
-                  If you want specify formmatters for the language, revise these settings.
+                  If you want to specify formatters for the language, revise these settings.
                   Otherwise, it will pick one automatically.
+
+                  -- Example: set formatters for each language
+                  formatters_by_ft = {
+                      go = { "goimports", "gofmt" },
+                      java = { "google-java-format" },
+                      lua = { "stylua" },
+                  }
                 --]]
-                -- go = { "goimports", "gofmt" },
-                -- java = { "google-java-format" },
-                -- lua = { "stylua" },
             },
             -- format code style after save.
             format_on_save = {

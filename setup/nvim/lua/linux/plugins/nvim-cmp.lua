@@ -29,7 +29,6 @@ return {
                 -- XXX: Set your snip package
                 -- REQUIRED - you must specify a snippet engine
                 expand = function(args)
-                    -- vim.fn["UltiSnips#Anon"](args.body) -- For `ultisnips` users.
                     require('luasnip').lsp_expand(args.body) -- For `luasnip` users.
                 end,
             },
@@ -48,7 +47,6 @@ return {
             sources = cmp.config.sources({
                 { name = 'nvim_lsp' },
                 -- XXX: Set your snip package
-                -- { name = 'ultisnips' }, -- For ultisnips users.
                 { name = 'luasnip' }, -- For luasnip users.
             }, {
                 { name = 'buffer' },
@@ -78,48 +76,23 @@ return {
         local capabilities = require('cmp_nvim_lsp').default_capabilities()
 
         -- Replace <YOUR_LSP_SERVER> with each lsp server you've enabled.
-        require('lspconfig')['autotools_ls'].setup {
+        vim.lsp.enable({
+            'autotools_ls',
+            'cmake',
+            'bashls',
+            'clangd',
+            'dockerls',
+            'docker_compose_language_service',
+            'gopls',
+            'lua_ls',
+            'jsonls',
+            'marksman',
+            'pyright',
+            'taplo',
+            'yamlls',
+        })
+        vim.lsp.config("*", {
             capabilities = capabilities,
-        }
-
-        require('lspconfig')['cmake'].setup {
-            capabilities = capabilities,
-        }
-
-        require('lspconfig')['bashls'].setup {
-            capabilities = capabilities,
-        }
-
-        require('lspconfig')['clangd'].setup {
-            capabilities = capabilities,
-        }
-
-        require('lspconfig')['docker_compose_language_service'].setup {
-            capabilities = capabilities,
-        }
-
-        require('lspconfig')['gopls'].setup {
-            capabilities = capabilities,
-        }
-
-        require('lspconfig')['lua_ls'].setup {
-            capabilities = capabilities,
-        }
-
-        require('lspconfig')['jsonls'].setup {
-            capabilities = capabilities,
-        }
-
-        require('lspconfig')['pylsp'].setup {
-            capabilities = capabilities,
-        }
-
-        require('lspconfig')['marksman'].setup {
-            capabilities = capabilities,
-        }
-
-        require('lspconfig')['yamlls'].setup {
-            capabilities = capabilities,
-        }
+        })
     end
 }

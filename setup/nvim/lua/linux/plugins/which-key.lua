@@ -1,6 +1,10 @@
 return {
     --[[
     WhichKey helps you remember your Neovim keymaps, by showing available keybindings in a popup as you type.
+
+    Limitation:
+    1. It is not working with vs code
+       floating windows, https://github.com/folke/which-key.nvim/discussions/592
     --]]
     "folke/which-key.nvim",
     event = "VeryLazy",

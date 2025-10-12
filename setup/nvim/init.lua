@@ -11,13 +11,30 @@ if not (vim.uv or vim.loop).fs_stat(lazypath) then
 end
 vim.opt.rtp:prepend(lazypath)
 
--- [ modules ]
-require("lazy").setup({
-    spec = {
-        { import = "colorschemes" },
-        { import = "plugins" },
-    },
-})
 
--- [ settings ]
-require("options.nvim")
+if vim.g.vscode then
+    -- ### VSCode extension
+
+    -- [ settings ]
+    require("vs_code.options.nvim")
+
+    -- [ modules ]
+    require("lazy").setup({
+        spec = {
+            { import = "vs_code.plugins" },
+        },
+    })
+else
+    -- ### ordinary Neovim
+
+    -- [ settings ]
+    require("linux.options.nvim")
+
+    -- [ modules ]
+    require("lazy").setup({
+        spec = {
+            { import = "linux.colorschemes" },
+            { import = "linux.plugins" },
+        },
+    })
+end

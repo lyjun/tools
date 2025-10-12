@@ -13,7 +13,10 @@ return {
             options = {
                 mode = "tabs", -- set to "tabs" to only show tabpages instead
                 diagnostics = "nvim_lsp",
-            }
+                numbers = function(opts)
+                    return string.format('%s', opts.lower(opts.id))
+                end,
+            },
         }
     end
 }

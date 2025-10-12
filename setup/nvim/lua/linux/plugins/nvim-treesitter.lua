@@ -30,7 +30,7 @@ return {
             sync_install = false,
             -- Automatically install missing parsers when entering buffer
             -- Recommendation: set to false if you don't have `tree-sitter` CLI installed locally
-            auto_install = false,
+            auto_install = true,
             -- List of parsers to ignore installing (or "all")
             ignore_install = {},
             ---- If you need to change the installation directory of the parsers (see -> Advanced Setup)

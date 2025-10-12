@@ -9,6 +9,7 @@ return {
     2. you can install Language Server Protocol linters via Mason with linter tab.
 
     --]]
+    enabled = true,
     "dense-analysis/ale",
     config = function()
         --[[
