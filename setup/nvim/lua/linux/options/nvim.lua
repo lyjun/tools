@@ -37,3 +37,9 @@ opt.shiftround = true
 -- [ VARIABLES ]
 -- global variables
 vim.g.mapleader = " " -- leader key
+
+
+
+-- [key mappings]
+-- Yank to system clipboard. It works like useing mouse to select and copy.
+vim.keymap.set({ 'n', 'v' }, '<leader>y', '"+y', { desc = "Yank to system clipboard" })
