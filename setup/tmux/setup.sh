@@ -45,7 +45,8 @@ setup_config() {
         mkdir -p ${dst}
         cd ${dst} && git clone --single-branch https://github.com/gpakosz/.tmux.git ${project_dir}
         ln -s ${project_dir}/.tmux.conf ${dst}/tmux.conf
-        cp ${project_dir}/.tmux.conf.local ${dst}/tmux.conf.local
+        # use our tmux.conf.local insteaof default (${project_dir}/.tmux.conf.local)
+        cp tmux.conf.local ${dst}/tmux.conf.local
 
     else
         echo "oh-my-tmux configuration already exists. Skipping setup."
