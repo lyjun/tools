@@ -1,0 +1,132 @@
+{
+  "attribution": {
+    "commit": "",
+    "pr": ""
+  },
+  "includeGitInstructions": false,
+  "permissions": {
+    "allow": [
+      "Agent",
+      "Bash(*)",
+      "Bash(sshpass *)",
+      "Read(//Users/yijyun/**)",
+      "Skill",
+      "WebFetch",
+      "WebSearch",
+      "Edit(//tmp/**)",
+      "Edit(.github/workflows/**)",
+      "mcp__mycelium__read",
+      "mcp__mycelium__search",
+      "mcp__mycelium__source_glob",
+      "mcp__mycelium__source_read",
+      "mcp__mycelium__source_search"
+    ],
+    "deny": [
+      "Bash(security *)",
+      "Bash(codesign *)",
+      "Bash(csrutil *)",
+      "Bash(spctl *)",
+      "Bash(dscl *)",
+      "Bash(passwd *)",
+      "Bash(launchctl *)",
+      "Bash(networksetup *)",
+      "Bash(scutil *)",
+      "Bash(pmset *)",
+      "Bash(softwareupdate *)",
+      "Bash(systemsetup *)",
+      "Bash(nvram *)",
+      "Bash(fdesetup *)",
+      "Bash(tmutil *)",
+      "Bash(shutdown *)",
+      "Bash(reboot *)",
+      "Bash(halt *)",
+      "Bash(chown *)",
+      "Bash(chgrp *)",
+      "Bash(chflags *)",
+      "Bash(dd *)",
+      "Bash(fdisk *)",
+      "Bash(diskutil erase*)",
+      "Bash(diskutil partitionDisk *)",
+      "Bash(rm -rf /)",
+      "Edit(//Users/yijyun/.ssh/**)",
+      "Edit(//Users/yijyun/.gnupg/**)"
+    ],
+    "ask": [
+      "Bash(sudo:*)",
+      "Bash(brew install *)",
+      "Bash(brew uninstall *)",
+      "Bash(npm install -g *)",
+      "Bash(pip install *)",
+      "Bash(pip3 install *)",
+      "Bash(gem install *)",
+      "Bash(crontab *)",
+      "Bash(rm -rf /*)"
+    ],
+    "defaultMode": "acceptEdits",
+    "additionalDirectories": [
+      "/Users/yijyun/Desktop/Workspace/ardge",
+      "/Users/yijyun/.claude"
+    ]
+  },
+  "model": "opus[1m]",
+  "fallbackModel": [
+    "claude-opus-4-7",
+    "claude-sonnet-4-6"
+  ],
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/git-branch-naming.sh",
+            "if": "Bash(git *)",
+            "timeout": 5,
+            "statusMessage": "Checking branch naming..."
+          }
+        ]
+      }
+    ]
+  },
+  "bashEditDiffEnabled": true,
+  "statusLine": {
+    "type": "command",
+    "command": "~/.claude/statusline-command.sh",
+    "padding": 0
+  },
+  "subagentStatusLine": {
+    "type": "command",
+    "command": "~/.claude/subagent-statusline-command.sh"
+  },
+  "enabledPlugins": {
+    "skill-creator@claude-plugins-official": true,
+    "gopls-lsp@claude-plugins-official": true,
+    "frontend-design@anthropic-plugin-directory": true
+  },
+  "outputStyle": "Plain report",
+  "language": "繁體中文",
+  "effortLevel": "high",
+  "modelSettings": {
+    "claude-opus-5-5": {
+      "effortLevel": "medium"
+    }
+  },
+  "advisorModel": "opus",
+  "promptSuggestionEnabled": false,
+  "awaySummaryEnabled": false,
+  "autoUpdatesChannel": "stable",
+  "minimumVersion": "2.1.245",
+  "tui": "fullscreen",
+  "autoMemoryEnabled": true,
+  "theme": "dark-daltonized",
+  "editorMode": "vim",
+  "verbose": false,
+  "preferredNotifChannel": "ghostty",
+  "autoCompactEnabled": true,
+  "autoScrollEnabled": true,
+  "remoteControlAtStartup": false,
+  "inputNeededNotifEnabled": false,
+  "useAutoModeDuringPlan": false,
+  "voiceEnabled": false
+}

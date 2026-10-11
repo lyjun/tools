@@ -1,0 +1,45 @@
+# 獨立反駁的執行細節
+
+`SKILL.md` 的〈交出去之前要過一次獨立反駁〉決定**要不要跑**與**送哪兩類**;這份檔是決定要跑之後的執行細節。跑之前讀完這份,不要憑印象組 prompt。
+
+送進去的是一個 read-only subagent,任務是**反駁**,不是複核。兩類東西的失效方向相反:第一類是我提出來的主張要被推翻,第二類是改動裡**已經被當成真的**句子要被推翻。兩類共用同一個 subagent,所以只 spawn 一次。
+
+## 一、自產的 finding
+
+範圍是落在 `issue` 兩級與 `question` 的自產項。`nitpick` / `note` 不送——它們本來就不宣稱行為後果,沒有主張可以攻擊。
+
+- 給它每則的**主張**、該則的 `程式要求` 欄、引到的 `file:line`、repo 的絕對路徑,以及該讀哪個 ref(remote PR 用 `git show <head>:<path>`,不准用工作目錄)。`程式要求` 一定要給:主張的真假是掛在那條要求上的,少了它反駁者只能拿 code 對主張,而一條寫錯的 `程式要求` 會整則過關——那正是 gate 第 2 關列為最高等級的那種錯。
+- 要它每則回一個 verdict:**REFUTED**(附推翻的那一行)/ **CONFIRMED** / **無法判定**。指示它以推翻為目標,不確定時傾向 REFUTED。
+- REFUTED 的丟掉,報告裡不提、也不降級留著。無法判定的保留,但在報告裡寫出反駁者卡在哪。
+
+## 二、這次 diff 改動的散文
+
+掃描對象是**行**,不是「看起來像在講理由的句子」:
+
+```bash
+git diff <base>...<head> -- '*.md' | grep '^+' | grep -v '^+++'
+git diff <base>...<head> -- . ':!*.md' | grep -E '^\+[[:space:]]*(//|#|\*|--)'
+```
+
+第一條抓 `.md` 的新增行(含 `docs/`、spec、openspec 的 design / tasks),第二條抓程式碼註解的新增行。**掃描端不做判斷**:整批行交給 subagent,由它標出哪些不宣稱行為(標題、TODO、格式說明)而跳過。
+
+先前寫成「帶『因為』/ `because` / `so that` 的才算」,那個形狀漏得掉:同一個 PR 裡「不重生 fstab,**是因為** data mount 會退回 `blkid -L`」掃得到,而「重生會把三條 mount 從 LABEL 改成 UUID」一個連接詞都不帶、一樣是假的,整條管線碰不到它。關鍵字清單補不完(破折號、「這樣才不會…」、`This is why`),補詞只會讓這一關退回「用到時記得察覺」。枚舉行之後漏掉只剩一種方式——那一行不在 diff 裡,而那正好表示這次沒動它。
+
+這一類非送不可,因為**擋它的另外兩道關在這種失效下必然全綠**:`SKILL.md` 的〈Design critique〉裡〈內部一致性〉比的是幾份敘述**互相**一致,而一句錯的理由通常被複製到註解、spec、tasks 好幾處,每一處都一致;委派出去的 correctness pass 對註解的定位是**判準**(`x-code-review/SKILL.md` 的 Code-comment compliance 準則,找的是 code 違反註解)與**降級依據**(同檔 cross-repo VERIFY 的 Intentional by design 與 PLAUSIBLE by default 兩條,引到註解就把候選 demote 成 design trade-off),兩個方向都以註解為真。所以一句寫錯的理由不但抓不到,還會讓引到它的 finding 一起消失。
+
+- 給它每行的原文、`file:line`、repo 的絕對路徑、該讀哪個 ref。**不要**給 `程式要求`——那一欄是第一類部分項目在用的(純實作缺陷本來就沒有),這裡沒有主張要對照,句子自己就是待驗對象。
+- **判 REFUTED 之前要先寫出「這句在哪個讀法下是對的」**,寫不出來就回無法判定。這是把 gate 那條必填欄位接進來(`SKILL.md` 的〈兩類 finding 各有一個必填欄位〉第一項):第二類是主動掃、沒人事先懷疑過那句話,所以第一類「不確定時傾向 REFUTED」的偏向在這裡**不繼承**——沿用它會把「在自己的框架下其實是對的」句子整批判成錯。
+- **明寫它可以離開 diff、離開 repo、並且實跑一次。** 這是與第一類最大的差別:這些句子講的常常是它自己碰不到的東西。實例——一句「不重生 fstab,是因為 data mount 會退回 `blkid -L` 而 blkid 要 udev」,要靠 `ab.go:450`(這個 PR 沒動的函式)、`/usr/bin/genfstab:373`(上游 binary,不在 repo 裡)、以及一次 loop device 實跑才推翻得掉。只餵 diff 的 subagent 會複製出同一個盲點,而 coverage list 是從 changed files 機械推導的,構造上永遠指不到 repo 外的檔。
+- **工具不在手邊時回無法判定,並寫出缺的是什麼。** 上面那個 `genfstab` 只裝在 devcontainer 或 dev 機上,macOS host 沒有(`command -v genfstab` 空)。缺工具最可能的結果是靜默跳過那次驗證然後回 CONFIRMED,而那正是這一關要擋的東西——所以要跑就到有那個工具的地方跑,跑不動就讓它以無法判定留下痕跡。
+- **句子把一個結果歸給某個前提時,CONFIRMED 要列出前提所在那段 code 的每一條分支**,逐條寫出結果在那條分支上是否成立、靠的是什麼。範圍是前提所在的整個 `if` / `switch` 語句(從條件到結尾),不限於所引的行,其中每個 `if` / `err != nil` / `switch` 的每一邊都算一條。只證到其中一條就回無法判定,不回 CONFIRMED。某條分支上結果成立、但靠的不是句子所歸的那個前提,該句回 REFUTED,理由寫歸因錯誤。實例——「排在 recovery-reset 判斷之後註冊,所以開機為 Resetting 時不會 bind」,反駁者只驗了 arm 成功、`return nil` 那一邊就回 CONFIRMED;arm 失敗那一邊會帶著 Resetting 繼續啟動,結果雖然仍成立,擋住 bind 的卻是 `holdsPorts`,這句的「所以」在那一邊不成立,應回 REFUTED。
+- verdict 三支:**REFUTED**(附推翻的那一行,或那次實跑的輸出)/ **CONFIRMED**(附證它的 `file:line` 或輸出)/ **無法判定**(寫出卡在哪)。
+- REFUTED 的要多回兩件事:**找副本用的 grep pattern**(取自被推翻那句的關鍵名詞)**與它的命中數**,以及逐個帶 `file:line` 的副本清單。要 pattern 而不只要清單,是因為「找完了」沒有可核對的物件,而一個寫出來的 pattern 有——讀者拿它重跑一次就知道範圍夠不夠。一句理由很少只寫一處,只改手上那一處、留著其餘的,下一個讀者拿到的仍是錯的。
+- 每份 REFUTED 的副本各成一則 finding,等級照 `SKILL.md` 的分級落在 `issue (blocking)`——文件與程式碼互相矛盾在那裡就是 blocking。CONFIRMED 與無法判定不進報告,只進 ledger 的計數。**兩類對「無法判定」的處置相反是刻意的**:第一類送進去的是已經過完八關的候選,反駁不掉就保留;第二類送進去的句子從沒被懷疑過,只有 REFUTED 才升格成 finding,把無法判定也端出去等於拿一堆沒被證明有問題的句子充數。
+
+## 痕跡
+
+**第一類寫進 atom,不靠記得。** 每則 `issue` / `question` 的 atom 多帶一行 `反駁:`,寫 verdict 與依據(`CONFIRMED——反駁者確認 X` / `無法判定——反駁者卡在 Y`)。這一行是第一類唯一的證據:少了它,在寫 atom 的當下就看得見這則沒送過反駁,不必先想起有這個步驟。
+
+**第二類寫進 ledger 那行,寫成計數**——`散文行 31 行 / 行為斷言 7 句:2 REFUTED、1 無法判定、4 CONFIRMED(3 則的引用落在 diff 外)`。四個數各擋一件事:行數是掃描端枚舉出來的、句數是 subagent 篩完的,只留後者就看不出掃描範圍對不對;而**最後那個括號是「有沒有真的離開 diff」唯一的對照物件**。一個從沒離開 diff 的 subagent 回的 CONFIRMED 與一個實跑過才回的,產物本來一模一樣——兩者都不變成 finding,都只讓計數加一——而「留在 diff 裡就判不出來」正是這一步要解的失效。所以 CONFIRMED 那一支也要附證它的 `file:line` 或指令輸出(見上面 verdict 三支),然後在這裡數出有幾則的引用落在 diff 之外;停在 diff 裡的那趟會顯示成 `0 則落在 diff 外`。
+
+計數整體也不能靠 atom:CONFIRMED 的句子不產生 atom,而那是多數,所以沒有計數時「掃過 0 句」與「這步沒跑」在報告上長得一模一樣。跳過整步時(兩類都空)在同一行寫明跳過的理由。
