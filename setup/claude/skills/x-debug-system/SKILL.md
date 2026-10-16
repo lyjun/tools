@@ -6,7 +6,7 @@ description: >
   tcpdump)、隔離、實測驗證假設、修復。Trigger on: 系統層故障、live 環境異常、
   「X 在機器上壞了 / 不通 / 起不來」、device / network / systemd 問題、跨 service
   runtime 失敗需現場診斷。範圍是活系統現場 debug;純靜態 code 閱讀(理解既有行為、
-  「為什麼這樣設計」)與 ARX k3s cluster 內部 GitOps 故障不在此列。
+  「為什麼這樣設計」)不在此列。
 user-invocable: true
 model: sonnet
 ---
