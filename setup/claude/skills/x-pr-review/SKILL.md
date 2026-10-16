@@ -211,6 +211,7 @@ For each comment → response pair, evaluate:
 - **完整性**: Were all raised points addressed, or only some?
 - **品質**: Is the solution design sound, or just the minimum change to close the comment?
 - **一致性**: Were related tests, docs, and other call sites updated in sync?
+- **機制主張**: 回覆是「有 X 所以不會發生」這類說法時，trace 到 code 得出結論（引上游原始碼時標版本）；結論要靠執行期狀態才會觸發，就寫出驗證方式、建議使用者實跑；結果連同做法帶回給作者。
 
 ### Warning signs
 
@@ -262,7 +263,7 @@ Before raising any finding (design critique or correctness), each candidate must
 
 After all eight pass, classify into one of **three** tiers (a binary High/drop bar silently loses genuinely useful non-blocking items and buries real ops risks):
 
-- **In report (blocking-tier)** — direct evidence, behavior outcome concrete and falsifiable. Label `issue (blocking)` / `nitpick` (Conventional Comments). `blocking` = 必改才能 merge(bug、新行為完全沒測試、文件與程式碼互相矛盾)。`nitpick` 的定義很窄:typo、違反專案明文約定的命名、違反本工具鏈 skill 檔明文約定的命名 / 格式(見 gate 第 7 關的來源與上限)、與**緊鄰程式碼**不一致的風格、有客觀正解的小改——「我覺得這樣讀起來比較好」不算。
+- **In report (blocking-tier)** — direct evidence, behavior outcome concrete and falsifiable. Label `issue (blocking)` / `nitpick` (Conventional Comments). `blocking` = 必改才能 merge(bug、新行為完全沒測試、文件宣稱的保證在程式碼裡不成立;只錯在措辭或失敗形狀的,照 `references/refutation.md` 定 `nitpick`)。`nitpick` 的定義很窄:typo、違反專案明文約定的命名、違反本工具鏈 skill 檔明文約定的命名 / 格式(見 gate 第 7 關的來源與上限)、與**緊鄰程式碼**不一致的風格、有客觀正解的小改——「我覺得這樣讀起來比較好」不算。
 - **Follow-up (non-blocking, in report under `Follow-up`)** — NOT merge-blocking, but names a **concrete failure mode or ops/operability risk**: silent no-op on a future API/version bump, a wedged state that won't surface without an event/metric, a guard that only bites under a specific future condition, a real maintainability hazard with teeth. **The test: you can state the concrete scenario it prevents** — 讀第 8 關已經寫進 `證據` 的那個觸發條件,只問它有沒有點名一個情境,不在這裡重新推導一個。This tier exists so useful non-blocking items aren't lost to the high bar — it is NOT a home for style.
 - **Drop** — style / naming / structure preference, bikeshedding (wording, ordering, phrasing), defensive improvement or "could add a test" with **no named failure mode or invariant**, pure speculation. **Do not include at all** — no "for your consideration" / "待確認".
 
@@ -345,7 +346,9 @@ Look beyond code quality — actively examine the design decisions:
 
 - **前提驗證**: Does the problem statement's assumption hold? Backed by real cases, or defensive assumption?
 - **根因對齊**: Does the solution target the root cause, or work around it? (e.g., cleaning up at the consumer instead of fixing at the source)
-- **背景完整性**: Does the description give reviewers enough context? Can someone unfamiliar with the domain follow the causal chain?
+- **背景完整性**: Does the description give reviewers enough context? Can someone unfamiliar with the domain follow the causal chain? 下面兩件由 reviewer 自己補進 `理解`,不等描述提供:
+  - 改動新增了一個自動動作(重建、重試、清理、恢復)時,寫一行使用者手動操作的路徑(停止、刪除、各種重開機入口)會不會碰到它,附擋住或放行那條路徑的 `file:line`。
+  - 以 `git log -S '<字串>' origin/<base>` 查出讓這個缺口成立的每一個條件(例:讓某種狀態沒有任何分支處理的判斷式、關掉原有保護的設定、決定缺口有多大的常數或閾值)各是哪個 commit 帶進來的,每一個寫出 commit、日期與作者;查不到就寫出用過的字串。
 - **內部一致性**: Are the PR description, code comments, and function docstrings consistent with each other?
 - **分支對比驗證**: When comparing behavior between two code paths, cite the file:line of each path's data producer — not just the local code inside each branch. Producers are where invariants (sort order, state lifecycle, ctx ownership) get established; branch internals are only consumers. Looking only at branch-internal code yields false symmetry conclusions ("branch A does X, branch B doesn't") when the invariant was actually set upstream.
 
@@ -373,6 +376,8 @@ Close with 2–3 numbered questions (accept + document / fix / "I considered thi
 
 When the run finishes, give the user an **internal report** (not posted, no edits) in 繁體中文, using engineering-standard terms (no invented or cross-domain words, e.g. not 病因).
 
+**交報告之前跑一次冷讀**(讀者 = PR 作者)。對象是每則 `issue` / `question` 會貼出去的那段,所以 2a 交報告時要附上貼文草稿(Template B),2b 的報告本來就照 Template C/A 寫(見〈Posting a review〉)。它問的是只拿到這段文字的作者說不說得出要改什麼;主張對不對是〈交出去之前要過一次獨立反駁〉的事。使用者是最後一關:看過、照回饋改完就貼,貼出時不重跑。結果寫進 ledger 那行。spawn 之前讀 `references/cold-read.md`。
+
 **兩份產物的讀者缺的東西不一樣,所以欄位不一樣。** 使用者沒讀過這份 code,得先拿到「這段 code 在要求什麼」才判斷得了 finding 真假;作者就是訂那條要求的人,對他複述只佔篇幅。欄位歸屬:`程式要求` / `定級理由` / `反駁` 內部限定;`證據` 收進貼出版 `建議` 句尾的 `file:line`,以及(僅限觸發條件那一項)折進 `問題` 那句;`根因＋解法` 拆成貼出版的 `問題`(機制與圖)與 `建議`(修法);只有 `問題` 兩邊都在。新增欄位時補進這份對照,不要另立說法。這只管欄位歸屬,不是「凡作者已知就不寫」——Template A 的根因對齊仍然要用 reviewer 自己的話寫出來,approve 的重量建立在那上面(見 `publish-format.md`)。
 
 **Repo-local 詞彙第一次出現要標歸屬。** 只在某個 repo 內部成立的詞——`core`、`carrier` / 載體、`table`、`slot`——在這個 workspace 常常已經被別的東西佔走(`core` 預設是 `arx-platform-core` 這個服務,不是 `arx-go-trust` 的 `internal/trustd/unwrap.Core`)。第一次寫成 `unwrap core`(arx-go-trust 的 `internal/trustd/unwrap.Core`,與 arx-platform-core 無關),之後固定用同一個短稱。**作者在這份 code 裡自己取的名字**是第二類——函式名或註解裡反覆出現、讀完 code 會覺得是普通話、其實只在這份 code 裡成立的詞(`pass`、`projection`、`census`;以該詞在這份 code 裡有沒有專屬意思為準,一般用法的同一個字不算)。候選來源是外顯的:寫進報告的英文詞或它的譯名,也出現在 diff 新增行的識別字或註解裡,就要過這一類。第一次出現時同一句要有一個子句說它**是什麼**(對應哪個函式、一次做哪幾件事),寫不出來就改用普通話;**只在句子裡用到、沒說它是什麼,不算有定義**。判準有兩條:「這個詞在別的 repo 有沒有別的意思」,以及「這個詞是不是只在這份 code 裡才有意思」——兩條都不是「這個詞難不難」。**一行括號、只付一次,不要另開名詞解釋段落**,那會把報告撐散。範圍:兩類都套用在內部報告的每一段(`理解`、跨 PR 的 briefing、每則 finding);貼出版只查第一類與 reviewer 自己新取的詞,作者自取的名字免——讀者是作者,詞是他取的。
@@ -390,15 +395,16 @@ When the run finishes, give the user an **internal report** (not posted, no edit
 **Finding atom** — depth scales with severity. Keep `file:line` inline as normal markdown (NOT inside a fenced code block — that kills the clickable jump). Do NOT column-align the labels: CJK label widths break monospace alignment, and bold labels on their own lines read cleanly without it.
 
 - Header on TWO lines (keeps it uncluttered):
-  - `<icon> [F<n>] <label> · <category>` — 順序固定 icon → id → label(與 `publish-format.md` 一致);**id 從內部報告的第一輪就編**,對話裡指名靠它(👍 clean verdict 例外,沒有 finding 可 carry forward,不帶 id)。icon + label per the **full** icon↔label map under *Posting a review* below; all seven are available here, not just the `issue` levels — `question` / `suggestion` / `note` are gate survivors too (per the *Pre-finding verification gate* tiers), and 👍 clean for a no-finding verdict. Category: correctness | security | performance | maintainability | docs
+  - `<icon> [F<n>] <label> · <category>: <subject>` — subject 一行講原因,短到能當標題、不放識別字,後果留給 `問題`、機制細節留給 `根因＋解法`;順序固定 icon → id → label(與 `publish-format.md` 一致);**id 從內部報告的第一輪就編**,對話裡指名靠它(👍 clean verdict 例外,沒有 finding 可 carry forward,不帶 id)。icon + label per the **full** icon↔label map under *Posting a review* below; all seven are available here, not just the `issue` levels — `question` / `suggestion` / `note` are gate survivors too (per the *Pre-finding verification gate* tiers), and 👍 clean for a no-finding verdict. Category: correctness | security | performance | maintainability | docs
   - `` `file:line` — `symbol` ``
 - **程式要求**: 這段 code 正在對呼叫方施加的那條約束——一到三句,用領域詞,**不出現任何識別字**。**REQUIRED 的條件是這則 finding 本身在講一條約束**——缺席、套錯、或寫錯;純粹的實作缺陷(nil-deref、常數錯、漏 error wrap)沒有約束可寫,這一行就不出現,與 `nitpick` / `note` 同。硬填會生出一句為真、成形、卻與主張無關的約束,比沒有更糟。有這一行時貼出去整段拿掉(見本節開頭的欄位歸屬)。**「准」的形狀要跟禁止的那半一起寫**:只寫禁止,讀者會用「一律禁止」的模型讀,而指出誤擋的 finding 在那個模型下不成立。範圍收在**整條約束缺席**——名詞層的缺口由上面〈Repo-local 詞彙〉那兩段與下面 `問題` 那條逐詞檢查管,兩者不重疊:這一欄補的正是「`問題` 句子裡沒有任何詞彙可以觸發那道檢查」的情形。實例:某則 finding 寫「這個形狀本來就是放行的」,而「有一個放行的形狀」從沒出現過,連問三輪才補回來;該寫的是「把網卡綁進 bond,它自己的位址會消失,原本走它的預設路由會搬到 bond 上。所以這裡有一條要求:成員持有預設路由時,只有在同一個請求裡同時講明 bond 的新位址與 gateway,才准建立。」
   **同一份報告裡同一條要求只在最早那則寫完整**,後面的 atom 寫 `程式要求同 F<n>`。範圍是報告不是 PR——跨 repo 報告分 PR 排版,寫完整的那則可能落在別的 PR 段落裡,所以一定帶號;只寫「同上」不帶號的,下一段就對不回去,是看得出來的錯。**寫完整的那則被反駁掉而從報告消失時,把全文升到最早那個還在的引用者身上**——反駁掉的項不進報告、號又空著不回收,`程式要求同 F<n>` 於是指向一個報告裡不存在的號。四份 PR 六則 finding 有三則靠同一條規矩時,複述三次正是把報告撐到讀者吸收不了的那個動作。
 - **問題**: **什麼壞了、誰承受、什麼條件下會發生**,一句話。第三項是第 8 關已經查過並寫進
   `證據` 的那一個,這裡只是把它放進句子,不在這裡重新判斷。race / concurrency finding 例外:
   它的觸發條件依上面 Class A/B 的格式展開,不壓進這一句。
+  **講到使用者看得到的狀態**(`被判成`、`顯示`、`看到`、`要等…才`、`直到…才變回來` 這類)時,同一句帶上應有的狀態 Y(照 PR 意圖或規格;不確定就寫成問句)與 gate 第 3 關的歸因;PR 之前的狀態可以另寫(通常放時間軸的 PR 前一欄),但不能代替應有的 Y。狀態會隨時間變,就接一張看得到的狀態的前後時間軸(走法同 *Layer-handoff claims*),code 分支樹留在 `根因＋解法`。
   **不要用程式碼路徑或旗標分支開頭**——「`X` 只在 A 分支被讀到」「這兩個 flag 併用會被擋」是機制,屬於 `根因＋解法`;`問題` 要讓沒讀過這段 code 的人自己判斷得出嚴重度。機制開頭的 finding 會被讀成「選項衝突」這種無關痛癢的事,然後多花一輪解釋。
-  **也不准預設讀者已經知道那個機制存在**——與 `理解` 同一條(上面 *Comprehension first*),finding 不豁免。檢查是機械的:`問題` 那句出現的每個上游 / 內部詞彙(旗標名、上游工具的設定名、schema 欄位名,以及在這個情境有兩種所指的普通字——`description` 可能是 PR 的也可能是 schema 欄位的),**同一句要找得到說它決定什麼的子句**,找不到就重寫。反例:「`honorLabels: true` 預設開著,但旁邊寫的理由不成立」(`honorLabels` 決定什麼沒說,讀者停在第一個詞)。正例:「撞名時要留 metric 自己的值還是 Prometheus 貼上的值——這個選擇預設選了 metric 那邊,而寫在旁邊的理由不成立,下一個要動它的人沒有依據可判斷」(先講這個選擇在決定什麼,再講誰承受)。
+  **也不准預設讀者已經知道那個機制存在**——與 `理解` 同一條(上面 *Comprehension first*),finding 不豁免。有沒有做到由交報告前的冷讀檢查(見〈Output model〉開頭):`問題` 那句出現的每個上游 / 內部詞彙(旗標名、上游工具的設定名、schema 欄位名,以及在這個情境有兩種所指的普通字——`description` 可能是 PR 的也可能是 schema 欄位的),冷讀者說不出它決定什麼,就重寫。反例:「`honorLabels: true` 預設開著,但旁邊寫的理由不成立」(`honorLabels` 決定什麼沒說,讀者停在第一個詞)。正例:「撞名時要留 metric 自己的值還是 Prometheus 貼上的值——這個選擇預設選了 metric 那邊,而寫在旁邊的理由不成立,下一個要動它的人沒有依據可判斷」(先講這個選擇在決定什麼,再講誰承受)。
 - **根因＋解法**: cause and fix woven into ONE compact passage — 2–3 sentences, not a wall of text; enough that the reader opens the code holding both the why and the patch. (blocking findings / judgment calls)
 - **證據**: the facts you read — quoted line / value / sibling fact, each with `file:line`. REQUIRED for every blocking finding and every judgment call.
 - **定級理由**: the single fact that flips the severity. (judgment calls only) 觸發落在產品外(檔案系統故障、硬體、斷電)**不是自動降級的理由**——後果的輕重逐則判斷,斷電把資料檔寫成 0 bytes 導致永久 crashloop 那類就是產品外觸發、後果嚴重。觸發條件本身住在 `證據`(第 8 關),這一欄只寫它為什麼把嚴重度推到這一級。
@@ -444,7 +450,7 @@ LGTM 👍
 
 **不列閘門結果。** CI 綠不綠、regen 跑了沒、測試存不存在,是合併前閘門的產物、給使用者看的,review 輸出不再列一次;順手驗過而**本身構成 finding** 的寫進 Follow-up,只是「我看過了」的不寫。額外驗過的改動、作者自己列的未結事項同理——歸進對應的 atom 底下,不另開節(有了空章節就會拿機制描述去填,而機制是作者自己寫的)。作者做對的事客觀寫他做了什麼,不寫成「我沒發現的」。
 
-**篇幅**:subject 一行,每條一查核點一行。讀者判準:作者不回頭看 diff,就能看懂什麼壞了、什麼條件下壞、怎麼修。`問題` 超過 2 句、`建議` 超過 3 句,或總長超過門檻(< 50 行 diff → 20 非空行;50–300 → 35)時,照砍的順序檢查一次:回述作者已知的事 → 同類項合併 → 展開的 atom 收回單行;砍完仍超過就保留,那是這條 finding 需要的長度。機制 codeblock 不計入——講不清時畫圖,不是多寫幾句。
+**篇幅**:subject 一行,每條一查核點一行。讀者判準:作者不回頭看 diff,就能看懂什麼壞了、什麼條件下壞、怎麼修——由交報告前的冷讀執行(見〈Output model〉開頭)。`問題` 超過 2 句、`建議` 超過 3 句,或總長超過門檻(< 50 行 diff → 20 非空行;50–300 → 35)時,照砍的順序檢查一次:回述作者已知的事 → 同類項合併 → 展開的 atom 收回單行;砍完仍超過就保留,那是這條 finding 需要的長度。機制 codeblock 不計入——講不清時畫圖,不是多寫幾句。
 
 **Template C — reply confirmation** (Case 2b with still-open items):
 

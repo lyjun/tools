@@ -45,6 +45,8 @@ Never pack multiple fields into one loop item. Write one explicit command per it
 
 Quote every `gh api` path that carries a query string: `gh api "repos/o/r/contents/x/action.yml?ref=v1"`. Same for any argument containing `?`, `*`, `[`, or `{`.
 
+Two arguments are quoted unconditionally, whatever they contain: the value of `--include=` (`grep -rn x --include='*.go'`) and the argument to `--jq` (`--jq '.headRefOid[0:8]'`). Both routinely carry a glob or a bracket, and in one session (2026-10-16) each was written bare and aborted the command.
+
 ## Bash: zsh Aborts the Rest of the Call on a Word Starting With `=`
 
 `echo a; echo ====; echo b` prints `a`, then `(eval):1: === not found`, and stops — `b` never prints and the call exits 1. zsh reads a leading `=` as `=cmd` (expand to the command's path), finds no command `===`, and aborts **everything after it in the call** — later `;`-joined commands and later lines alike; only a `( … )` subshell contains it. Used as a section separator between reads, it silently drops every read after it, and the error reads as one of those reads failing.

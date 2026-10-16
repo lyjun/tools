@@ -1,7 +1,7 @@
 ---
 name: x-cc-config-guide
 description: "Considerations checklist before modifying Claude's meta-configuration. Trigger when: creating or modifying any ~/.claude/skills/*/SKILL.md (frontmatter, description, or content), adding or restructuring files in ~/.claude/rules/, deciding what to write into MEMORY.md, evaluating whether to enable a plugin, judging whether a piece of knowledge should be a rule, skill, or memory entry, or deciding whether a procedure written as SKILL.md prose should become a script under a skill's scripts/. Provides per-domain notes to avoid common mistakes."
-model: haiku
+model: sonnet
 ---
 
 # Claude Config Guide
@@ -197,6 +197,7 @@ rule 的失效是「沒察覺」，script 的失效是 **exit 0 而什麼都沒�
   **換方向**：連續兩輪都有 blocking 過關，停下來交給使用者，問要不要從「靠模型察覺」改成「要求產出可核對的東西」，不再一句一句補。follow-up 不計入。
 
   以一次改 x-plan 的審查為例：「原文裡使用者說『改』之後，主 agent 把審完又改過、沒再審的那一版寫入」三關都過；「主 agent 可以用 fork 開新 agent，把前幾輪結論帶進去」，那次的原文裡從沒用過 fork，第一關就丟。把審查者當成鑽字眼的對手、不設這三關，每一版都找得到新的推測，規則只會越補越長
+- **寫入時只套審過的 diff，不把測試用的副本整份蓋回去**：替換用的舊字串與新字串只取自交給使用者看過的那份 diff，不從「當下檔案對副本」的 diff 推出——那份會把別人寫進去的行算成要刪的行。改用 Edit，或寫一支 script 先確認每個舊字串在當下的檔案裡恰好出現一次再替換。`~/.claude` 不在 git 底下，從副本建立到寫入的這段時間，其他 session 寫進同一個檔案的修改會被無聲蓋掉，事後不一定救得回（這次靠的是對方 session 在 `~/.claude/file-history/` 留下的備份）
 - 包含範例（input → output 形式），但不要為了範例而範例
 - 寫完隔一段時間再回看，砍掉 dead weight
 
