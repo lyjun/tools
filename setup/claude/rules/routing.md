@@ -158,7 +158,7 @@ Boundary with `arx-cluster-ops`: ARX k3s cluster 內部故障(flux / pod / HelmR
 
 ### x-cc-config-guide
 
-- Creating or modifying any `~/.claude/skills/*/SKILL.md` (frontmatter, description, content structure)
+- Creating or modifying any file under `~/.claude/skills/` (a SKILL.md's frontmatter, description, content structure, or anything in `references/` or `scripts/`)
 - Adding, restructuring, or removing files under `~/.claude/rules/`
 - Editing `MEMORY.md` or memory entries under `~/.claude/projects/*/memory/`
 - Discussing whether a piece of knowledge belongs in rule vs skill vs memory

@@ -22,6 +22,7 @@ def order(first, second, absent=False):
     return f"---\ntype: regex\ntarget: trace\nmatch: {m}\n---\n{fired(first)}[\\s\\S]*{fired(second)}\n"
 
 TR, DB, GW, PL, DD = "x-code-analysis-tracing", "x-debug-system", "arx-groundwork", "x-plan", "x-design-dialogue"
+CG = "x-cc-config-guide"
 CASES = {
   # tracing vs debug: the one either/or boundary
   "td-tracing-why-code": ("為什麼 arx-platform-manager 在 RAID reset 之後，會把 md 成員底下的舊 ext4 露出來？從 code 解釋這條路徑。",
@@ -55,4 +56,11 @@ CASES = {
       {"groundwork-fired": tu(GW)}),
   "dd-mechanical-rename": ("把 arx-platform-manager 裡所有 FirmwareManager 改名成 Manager，同一個機械變換，沒有要討論的。",
       {"dialogue-quiet": tu(DD, 0, 0), "groundwork-quiet": tu(GW, 0, 0)}),
+  # config guide: any file under a skill, not only SKILL.md
+  "cg-edit-skill-reference": ("在 ~/.claude/skills/x-coding-standards/references/rest-api.md 的 Pagination Modes 那節，補上 pageSize 要有上限的說明。",
+      {"guide-fired": tu(CG)}),
+  "cg-edit-skill-script": ("~/.claude/skills/x-pr-review/scripts/pr-size.sh 的檔頭註解太長，幫我精簡成三行。",
+      {"guide-fired": tu(CG)}),
+  "cg-edit-skill-md": ("在 ~/.claude/skills/x-plan/SKILL.md 加一段：拆單時每個項目要寫完成判準。",
+      {"guide-fired": tu(CG)}),
 }

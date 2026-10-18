@@ -1,6 +1,6 @@
 ---
 name: x-cc-config-guide
-description: "Considerations checklist before modifying Claude's meta-configuration. Trigger when: creating or modifying any ~/.claude/skills/*/SKILL.md (frontmatter, description, or content), adding or restructuring files in ~/.claude/rules/, deciding what to write into MEMORY.md, evaluating whether to enable a plugin, judging whether a piece of knowledge should be a rule, skill, or memory entry, or deciding whether a procedure written as SKILL.md prose should become a script under a skill's scripts/. Provides per-domain notes to avoid common mistakes."
+description: "Considerations checklist before modifying Claude's meta-configuration. Trigger when: creating or modifying any file under ~/.claude/skills/ (a SKILL.md's frontmatter, description, or content, or anything in references/ or scripts/), adding or restructuring files in ~/.claude/rules/, deciding what to write into MEMORY.md, evaluating whether to enable a plugin, judging whether a piece of knowledge should be a rule, skill, or memory entry, or deciding whether a procedure written as SKILL.md prose should become a script under a skill's scripts/. Provides per-domain notes to avoid common mistakes."
 model: sonnet
 ---
 
@@ -72,6 +72,24 @@ model: sonnet
 
 - 兩個 skill description 太相近會誤觸 → 修改 description 加區分性關鍵字
 - 真重疊嚴重 → 合併或刪除其中一個，不要互相 reference
+
+### 通用 skill 不帶組織專屬內容
+
+`x-` 開頭的 skill 是通用的：換公司、同事複製過去都要照常運作。綁定某個組織的內容不寫進去——複製過去後，這些句子會指向不存在的 repo、主機或 skill，agent 照著去找會撲空；「某服務目前沒做 X」這類現況敘述在新環境是錯的，agent 卻會當成事實。
+
+**需要組織資料時**，`x-` skill 寫的是「這類資料歸誰、通常放在哪一類地方」，不寫唯一的位置，也不寫找到的內容：規範找擁有者放慣例的地方（例：`docs/`，或環境給 AI 工具的入口檔，如 `CLAUDE.md`、`GEMINI.md`）；個人設定與機密找使用者指定的設定檔。找不到時明說找過哪裡，並問使用者，不要當成沒有。組織專屬、通用流程沒有的步驟不寫進來，放在前綴不是 `x-` 的 skill，由它以 composition 呼叫這支。也不要在 `x-` skill 的 `references/` 放組織專屬檔：複製時資料會一起被帶走，SKILL.md 也得點名那個檔才讀得到。
+
+**寫入前跑檢查，逐則下判定。** 改 `x-` skill 的任何檔案（SKILL.md、`references/`、`scripts/`）前先留一份改前副本，寫好草稿後跑：
+
+```
+python3 ~/.claude/skills/x-cc-config-guide/scripts/portability-check.py --config <設定檔> --before <改前> --after <改後>
+```
+
+`<設定檔>` 是使用者維護的 YAML，列各公司的名稱、GitHub org、放 code 的根目錄，以及縮寫、主機名、帳號名（格式見腳本開頭說明；根目錄底下的 repo 名稱由腳本執行時自己列）。它的路徑記在使用者的 `CLAUDE.md`；沒記就問使用者，不寫進 skill。腳本只列新增行裡有命中的行，一行一則（`HIT 檔:行 [來源:命中字, …] 該行內容`），不判斷。把輸出貼出來，對每一則 HIT 寫一行判定：`改`、`保留：量測出處，<理由>`，或 `保留：誤判，<包含命中字的那個無關詞>`（例：「`lab` 在 `label` 裡，一般單字」；每個命中字都要各寫出包含它的那個詞，而且那個詞是一般語言的單字，不是識別字、帳號、主機、repo 或 skill 名；有一個寫不出，整行就不是誤判），或 `保留：通用路徑，<它是什麼>`——只限路徑形狀的命中（`path`、`file:line`、`home-path`），而且是任何環境都一樣的路徑：語言標準庫、公開套件、`x-` skill 自己或互相引用的路徑、明顯的佔位符（`path/one.go`、`/Users/x/...`）。判這一種之前，帶目錄的路徑先查它在不在設定檔 `code_root` 底下各 repo 的追蹤檔案裡（`git -C <repo> ls-files`）：在的話就是 repo 內路徑，不算通用，看起來再普通也一樣。單一檔名（`main.go:8`）查不出歸屬，照下面的判準看它在句子裡是不是那個 codebase 的東西。判 `改` 的，貼出那一整行改寫後的全文，對整行套下面的判準，不只看命中字——拿掉命中字之後，同一行常還留著現況句或那個 codebase 的識別字，腳本看不出來；只要有一則判 `改`，改完就再跑一次；剩下的 HIT 要逐則對得上判為 `保留` 的那幾則，多出來的就是沒改到。`VERDICT: unavailable` 表示沒有真的量到東西，輸出的 `NOTE:` 會說原因：設定檔沒給、比對清單是空的、某個 `code_root` 不存在或底下沒有 repo、`--files` 一行都沒掃到，或改前與改後內容相同（副本是改完才留的）。這時不寫入；缺設定檔就向使用者要，還沒有就和使用者一起建一份（放哪裡由使用者決定），跑到 `VERDICT: ok` 才寫。腳本抓不到的是沒有路徑形狀、也不在比對清單裡的識別字（例如某個 codebase 的函式名），這部分照下面的判準自己看。
+
+**判準**（替每則 HIT 下判定，也用來看腳本抓不到的部分）：會叫讀者去看、去依賴，或要讀者相信某個只在組織裡成立的現況的文字，一律改寫——repo 內路徑與 `file:line`、主機名與帳號、組織 skill 名、只在那個 codebase 才有的識別字、描述組織現況的句子。要讀者去看的範例，改成描述它的形狀（「一條帶 RFC 2119 關鍵字的規則」），或改成怎麼在當前 codebase 找到它（「先 grep 既有做法再照做」）。呼叫其他 `x-` skill 是上節允許的 composition，照留。
+
+**例外：量測出處。** 支撐某條規則的實測紀錄可以保留 repo 名、量到的數字與日期（「在某 repo 量到 33639 行」）——換了環境規則照樣成立，名字只是證據的出處。兩個條件都要成立才算：那句話記的是量到的結果，而且把 repo 名換成任何 repo 規則照樣成立。即使算出處，repo 內路徑、`file:line` 與描述現況的句子仍照上面改寫；交代設計理由時點名一支組織 skill 不是量測，要改寫。
 
 ### Effort 限制
 
