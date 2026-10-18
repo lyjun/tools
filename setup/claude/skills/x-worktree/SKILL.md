@@ -101,7 +101,7 @@ model: haiku
    - manager：`make build` 死在 `build-web`，`src/web` 是空的；改跑 `go build ./...` 會過，因為 Go 那半不讀它
    - api：`go build ./...` 自己就死在 `internal/wizardcontent/embed.go` 的 `go:embed`，`arx-welcome-wizard` 是空的；換指令沒有用，只能補
 
-   **不預設做，兩個代價都是實測的**：worktree 的 submodule 有自己的 gitdir（`.git/worktrees/<name>/modules/…`），不共用 main clone 的 `.git/modules`，所以這是一次真的 clone、會走網路；補過之後 `git worktree remove` 會永久回 `fatal: working trees containing submodules cannot be moved or removed`（exit 128），連 `submodule deinit -f --all` 都解不掉，只剩 `--force`（見〈清理流程〉step 5）。
+   **不預設做，兩個代價都是實測的**：worktree 的 submodule 有自己的 gitdir（`.git/worktrees/<name>/modules/…`），不共用 main clone 的 `.git/modules`，所以這是一次真的 clone、會走網路；補過之後 `git worktree remove` 會永久回 `fatal: working trees containing submodules cannot be moved or removed`（exit 128），連 `submodule deinit -f --all` 都解不掉，只剩 `--force`；清理時什麼情況可以直接用、什麼情況要先問，見〈清理流程〉step 5。
 
    **只能在 host 跑**：worktree **頂層**的 `.git` 是一個寫著 `gitdir:` 的檔案（與上一段那個 submodule 自己的 gitdir 是兩個東西），指向容器沒有 mount 的路徑，所以容器內需要 repo 的 git 指令一律失敗，submodule 這幾道也不例外。量測見 `x-environments/references/devcontainer.md`〈Worktree 的 container 內不能跑 git〉。
 
@@ -164,6 +164,8 @@ review 別人的 PR 時直接在他的 branch 上補 commit（例如文件修正
 
 **前置**：若 session 啟動 cwd 位於要刪除的目錄內，請使用者改由上層 session 執行 step 5、8。
 
+**清理由誰提出**：使用者明確要求清理（自己說了要清，例：「幫我清除掉」）時，step 1 的清單貼出後只告知、不等回覆——使用者已自己提出清理，不再要第二次確認，這是對「刪除前先確認」的刻意例外，只限這種情況；清單列出的路徑超出使用者點名的範圍時（例如他只點名一個 repo），不算這種情況。清理是我主動提議的，step 1 貼出清單後停下來，等使用者回覆同意才往下走；step 5 submodule 那一列的 `--force` 仍要另外問。
+
 1. **列出這個 issue folder 底下所有已註冊的 worktree，作為後面每一步的來源**：
 
    ```bash
@@ -175,6 +177,8 @@ review 別人的 PR 時直接在他的 branch 上補 commit（例如文件修正
 
    每一列的 `branch=` 要在這裡抄下來——`git worktree remove` 之後就問不出某個路徑原本掛哪條 branch，step 6 會沒有東西可讀。detached HEAD 的目錄印的是 `branch=(detached HEAD — nothing to delete)`，那一列 step 6、7 跳過，step 2 走 detached 那一支。
 
+   把這份清單（每列的路徑與 branch）貼給使用者；貼完要不要等回覆，照〈清理由誰提出〉。它是這次清理範圍的定義，step 5 submodule 那一列用 `--force` 時以它為同意的範圍。
+
 2. 確認刪掉本機這份不會丟東西——任何一項不成立就停下來回報，不往下走。以下 git 指令都在該 repo 的 main clone 跑（`git -C <ardge-workspace>/<repo-name> …`），`gh` 指令非零一律視同查不到、停下來：
    - **有 branch 的**，每一條先問遠端還在不在：`git ls-remote --exit-code --heads origin refs/heads/<branch>`。寫完整 ref 是因為 `--heads origin <branch>` 比對的是字尾，`foo/<branch>` 也會命中
      - exit 0（遠端還在）→ `git fetch origin <branch>`（非零就停：接下來比的會是過期的 `origin/<branch>`），再確認 `git merge-base --is-ancestor <branch> origin/<branch>` 是 exit 0，即本機沒有未 push 的 commit。用祖先關係不用相等：代改別人 PR 時作者常在我之後又推過，本機落後遠端不會丟東西
@@ -183,7 +187,7 @@ review 別人的 PR 時直接在他的 branch 上補 commit（例如文件修正
        - 不比對 head 是否等於本機 tip：代改別人 PR 時，作者常在我推完之後再補 commit 才 merge，那時 head 比本機新，但本機沒有東西會丟
      - 其他 exit code → 查詢失敗（斷網、認證），不能當成「遠端已刪」
    - **detached HEAD 的**：`git -C <path> log --oneline origin/develop..HEAD` 要是空的。step 3 的 `git status` 只看未 commit 的變更，detached 上已 commit 沒推的東西在 step 5 會直接丟掉
-3. `git status` 確認無未提交變更
+3. 對 step 1 列出的每一個路徑跑 `git -C <path> status --porcelain`，輸出必須是空的。未追蹤的檔案（`??`）也算，submodule 裡的修改、未追蹤的檔案與新 commit 會以 ` M <submodule 路徑>` 出現，同樣算。接著對同一個路徑跑 `git -C <path> submodule foreach --quiet --recursive 'git log --oneline HEAD --branches --not --remotes; git stash list'`，要 exit 0 而且輸出是空的。沒有 submodule 的路徑直接得到這個結果，所以每個路徑都跑，不必先判斷補過沒有。這一道看得到上層 porcelain 看不到的三種東西：submodule 的 HEAD 上沒推、又已被上層記錄的 commit（`submodule update` 之後 HEAD 是 detached，不屬於任何 branch，所以 `HEAD` 與 `--branches` 都要寫）、submodule 裡其他本機 branch 沒推的 commit、submodule 的 stash（2026-10-18 實測三種都列得出來，上層 porcelain 三種都是空的；乾淨與沒有 submodule 的路徑都是 exit 0、空）；exit 不是 0 是沒量到（例如 submodule 的 gitdir 壞了，同日實測 exit 128、stdout 空），不能當成乾淨。兩道都在 host 跑，worktree 的 container 內不能跑 git（見〈建立流程〉step 5）。任一道有輸出或沒有 exit 0，就停下來把輸出交給使用者決定
 4. **對 step 1 列出的每一個路徑**，若其 devcontainer 仍在執行，先 stop（N 個目錄就跑 N 次；`<worktree-path>` 就是 step 1 印出的那個絕對路徑，label 比對的是絕對路徑）：
 
    ```bash
@@ -194,8 +198,8 @@ review 別人的 PR 時直接在他的 branch 上補 commit（例如文件修正
    docker mount 持續佔住 worktree path 會讓後續 `git worktree remove` 卡 untracked artifacts，且容器孤兒佔用 docker 資源。
 
 5. 對 step 1 列出的**每一個路徑**執行 `git worktree remove <path>`
-   - 若因 untracked build artifacts 失敗，**必須暫停並明確取得使用者同意**後才加 `--force`，禁止在描述中自行判定後直接執行
-   - `fatal: working trees containing submodules cannot be moved or removed`（exit 128）是**另一個原因、同一個症狀**：這個 worktree 補過 submodule（建立流程 step 5）。`submodule deinit -f --all` 解不掉，實測 deinit 之後照樣 128，所以這裡唯一的出路就是 `--force`。它與上一列的差別在於沒有東西會遺失——submodule 的內容重跑一次 init 就回得來——但**照樣要先問**，因為問的理由是「`--force` 這個動作要使用者同意」，不是「這次風險高不高」
+   - 若因 untracked build artifacts 失敗，**必須暫停並明確取得使用者同意**後才加 `--force`，禁止在描述中自行判定後直接執行（補過 submodule 的那一種見下一列）
+   - `fatal: working trees containing submodules cannot be moved or removed`（exit 128）是**另一個原因、同一個症狀**：這個 worktree 補過 submodule（建立流程 step 5）。`submodule deinit -f --all` 解不掉，實測 deinit 之後照樣 128，所以這裡唯一的出路就是 `--force`。這一列**直接改用 `--force` 重跑，不再另外問**，條件有兩個：這個路徑過了 step 3 的兩道檢查（`git status --porcelain` 是空的，`submodule foreach` 那道 exit 0 而且是空的），而且清理是使用者明確要求的。錯誤訊息本身不能當條件：補過 submodule 的 worktree 不論乾淨與否都回這同一行，dirty 的訊息出不來；而單一個 `--force` 不管 worktree 裡有什麼都會整個刪掉（2026-10-18 實測 git 2.54，乾淨、頂層有未追蹤檔、頂層有修改、submodule 裡有未追蹤檔、submodule 裡有新 commit 五種，全部回這一行，`--force` 全部刪除）。所以擋住東西不被刪的只有 step 3，包含 `submodule foreach` 那道：submodule 裡沒推的 commit 被上層記錄之後，上層的 porcelain 是空的，而 `--force` 會連 submodule 的 gitdir（`.git/worktrees/<name>/modules/…`）一起刪，那個 commit 就不在任何地方了（同日實測）。使用者明確要求清理，就是同意移除這個 worktree；同意的範圍是 step 1 貼給使用者的那些路徑，不在那份清單上的不算，清理是我主動提議的也不算，兩者都照上一列先問。step 2、3 都過了，`--force` 越過的只剩 submodule 這道檢查。回報時寫明這個路徑用了 `--force`，以及是因為補過 submodule
 6. 對 step 1 抄下的**每一條 branch** 執行 `git -C <ardge-workspace>/<repo-name> branch -d <branch>`。還沒 merge 進 HEAD 的 branch 會印 `not yet merged to HEAD` 的 warning 但照樣刪除——前提是這條 branch 設了 upstream、而那個 upstream ref 還在，它已 merge 進那裡。沒設 upstream，或 ref 被 prune 掉之後（常見於遠端 merge 時自動刪除、又跑過 `fetch --prune`），`-d` 改拿 main clone 的 HEAD 比，squash merge 的 branch 會回 `not fully merged` 拒絕。遇到就停下來，附上 step 2 的證據請使用者同意，不自行改用 `-D`
 7. **刪遠端 branch 要有正面證據**，每一條各查一次，兩個指令都要 exit 0：
 
