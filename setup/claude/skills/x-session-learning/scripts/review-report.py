@@ -2,7 +2,8 @@
 """Extract the actionable parts of an /insights report for x-session-learning --review.
 
 Measures only: which report was read, its section ids, every copy-button item
-(text = what the button copies), the Key pattern, Tool Errors counts, and the
+(text = what the button copies), the Key pattern (the intro paragraph of
+section-wins; older reports had a div.key-insight that is gone), Tool Errors counts, and the
 full text of section-friction. Judging coverage / adoption stays with the agent.
 
 Every exit path prints one `VERDICT:` line:
@@ -22,7 +23,7 @@ import os
 import sys
 from html.parser import HTMLParser
 
-REQUIRED_SECTIONS = ["section-usage", "section-friction", "section-features",
+REQUIRED_SECTIONS = ["section-work", "section-wins", "section-friction", "section-features",
                      "section-patterns", "section-horizon"]
 # Copy buttons this script knows how to read. Anything else is a format change.
 DEFAULT_DIR = os.path.expanduser("~/.claude/usage-data")
@@ -64,7 +65,6 @@ class Report(HTMLParser):
         self.last_closed = None     # tag name of the element that closed right before
         self.key_pattern = None
         self.in_key = False
-        self.key_depth = 0
         self.key_buf = []
         self.chart_title_next = False
         self.chart_title = None
@@ -98,10 +98,9 @@ class Report(HTMLParser):
             if self.code_depth == 0:
                 self.code_buf = []
             self.code_depth += 1
-        if tag == "div" and self.in_key:
-            self.key_depth += 1
-        if tag == "div" and "key-insight" in cls.split() and self.section == "section-usage":
-            self.in_key, self.key_buf, self.key_depth = True, [], 1
+        if tag == "p" and "section-intro" in cls.split() and self.section == "section-wins" \
+                and self.key_pattern is None:
+            self.in_key, self.key_buf = True, []
         self.cur_class = cls
         if tag == "div" and cls == "chart-title":
             self.chart_title_next = True
@@ -112,11 +111,9 @@ class Report(HTMLParser):
             self.in_h2 = False
         if tag == "code" and self.code_depth:
             self.code_depth -= 1
-        if tag == "div" and self.in_key:
-            self.key_depth -= 1
-            if self.key_depth == 0:
-                self.in_key = False
-                self.key_pattern = " ".join("".join(self.key_buf).split())
+        if tag == "p" and self.in_key:
+            self.in_key = False
+            self.key_pattern = " ".join("".join(self.key_buf).split())
         self.last_closed = tag
 
     def handle_data(self, data):
@@ -131,8 +128,8 @@ class Report(HTMLParser):
         if self.chart_title_next and data.strip():
             self.chart_title = data.strip()
             self.chart_title_next = False
-            self.tool_errors_found |= self.section == "section-usage" and self.chart_title.startswith("Tool Errors")
-        in_tool_chart = self.section == "section-usage" and (self.chart_title or "").startswith("Tool Errors")
+            self.tool_errors_found |= self.section == "section-work" and self.chart_title.startswith("Tool Errors")
+        in_tool_chart = self.section == "section-work" and (self.chart_title or "").startswith("Tool Errors")
         if in_tool_chart and data.strip():
             if self.cur_class == "bar-label":
                 if self.bar_label:
@@ -193,9 +190,9 @@ def main():
         tag = "shape" if len(empty) >= len(p.items) else "partial"
         problems.append(f"[{tag}] {len(empty)}/{len(p.items)} copy-button items with empty text")
     if not p.key_pattern:
-        problems.append("[shape] Key pattern (div.key-insight in section-usage) not found")
+        problems.append("[shape] Key pattern (p.section-intro in section-wins) not found")
     if not p.tool_errors_found:
-        problems.append("[shape] Tool Errors chart (chart-title 'Tool Errors…' in section-usage) not found")
+        problems.append("[shape] Tool Errors chart (chart-title 'Tool Errors…' in section-work) not found")
     elif not p.tool_errors:
         problems.append("[shape] Tool Errors chart found but 0 bar rows read")
     if p.bar_label:  # last label never got a value

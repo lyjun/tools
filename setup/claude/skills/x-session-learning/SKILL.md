@@ -34,9 +34,9 @@ model: sonnet
 
 #### 1. 資料收集
 
-資料源是 `~/.claude/projects/<encoded-cwd>/<session-id>.jsonl`。**開始解析前先讀 [transcript-parsing.md](references/transcript-parsing.md)**：該檔記錄五個解析陷阱，其共同性質是產生錯誤數值而非拋出錯誤，因此不會在執行時被發現。
+資料源是 `~/.claude/projects/<encoded-cwd>/<session-id>.jsonl`。**開始解析前先讀 [transcript-parsing.md](references/transcript-parsing.md)**：該檔記錄六個解析陷阱，其共同性質是產生錯誤數值而非拋出錯誤，因此不會在執行時被發現。
 
-統計當前 session：
+統計當前 session。下面的 token、Advisor、輪次、Duration、Tools、per-skill turn 只取 `type == "assistant"` 的 record：Tools 與輪次不限定會被灌水（reference 陷阱六），其餘一併限定，讓所有計數取自同一批 record。User pushback 訊號不在此限，來源照它那一條：
 
 - **Per-model token 分布**：依 model 列出 input / output / cache_create / cache_read。先按 `message.id` 去重再加總
 - **Advisor 成本**：advisor 的 token 不在頂層 `usage`，只在 `usage.iterations[]` 裡 `type == "advisor_message"` 的項目，帶自己的 `model`。去重後另列一行，不併進 session model 分布與 cache 分母（理由見 reference 陷阱五）
@@ -220,7 +220,7 @@ ls ~/.claude/agents/*.md
 
 **產出前對帳**：各工具次數加總必須等於 total tool calls，且兩個數字都取自同一次 `message.id` 分組的結果。對不上代表中途換過解析方式，數字是錯的而不是誤差——重算，不要兩種算法的數字並排放進同一份報告。
 
-這個檢查對「兩個數字同源」的錯誤無效：分組寫錯時分項與總數會一起錯而仍然相等，對帳照樣通過。見 [transcript-parsing.md](references/transcript-parsing.md) 陷阱二的 221 / 467 / 225 對照——tool call 總數要另外用一次獨立算法覆驗，不能只靠這條加總。
+這個檢查對「兩個數字同源」的錯誤無效：分組寫錯時分項與總數會一起錯而仍然相等，對帳照樣通過。見 [transcript-parsing.md](references/transcript-parsing.md) 陷阱二的 221 / 467 / 225 對照——tool call 總數要另外用一次獨立算法覆驗，不能只靠這條加總。獨立算法可用 `type=user` record 裡 `tool_result` 的不重複 `tool_use_id` 數；陷阱六的灌水用這個方法抓得到（該節表中第三欄）。
 
 ### 修改後一致性審視
 
@@ -334,7 +334,7 @@ subagent 回報問題後，向使用者提出修正方案，確認後執行。
 ...
 
 ### 使用者行為 Context（來自 Report）
-> Key pattern: [從 How You Use Claude Code 提取的行為摘要]
+> Key pattern: [從 Impressive Things You Did 的開場段提取的行為摘要]
 
 ### Report 建議逐條對照
 | section id | 建議項目 | 結論 |

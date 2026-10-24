@@ -45,12 +45,12 @@ WebFetch("https://api.github.com/repos/anthropics/claude-code/releases/tags/v{ve
 | 新的 subagent_type（Explore, Plan, ...）、Agent tool 參數、workflow subagent 的 env | Phase 2 工具選擇 + Subagent overrides |
 | Memory 機制變更（auto-memory、type 規範） | Memory hygiene |
 | Context 管理新功能（compaction、1M context、session resume） | Phase 2 Context 管理 |
-| Advisor 機制變更 | Phase 1 資料收集的 Advisor 成本（token 來源見 transcript-parsing.md 陷阱五） |
+| Transcript 記錄格式變更（新的 record 型別、`usage` 欄位、advisor 機制） | Phase 1 資料收集；gap 多半住在 transcript-parsing.md（advisor 見陷阱五、新 record 型別見陷阱六） |
 
 ## Phase 4: 比對自身 SKILL.md
 
 1. Read `~/.claude/skills/x-session-learning/SKILL.md`
-2. 對每個命中的 signal，搜尋 SKILL.md 是否已 cover（grep 關鍵字、檢查表格列、檢查 phase 結構）
+2. 對每個命中的 signal，搜尋 SKILL.md 是否已 cover（grep 關鍵字、檢查表格列、檢查 phase 結構）；Transcript 記錄格式那一類同時 grep references/transcript-parsing.md
 3. 列出未 cover 的 gap，標注：
    - 應該新增的位置（哪個 phase / 哪個 sub-section）
    - 現有最接近的內容（用於評估「合併」vs「新增」）

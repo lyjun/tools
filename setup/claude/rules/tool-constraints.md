@@ -37,7 +37,9 @@ Never pipe a command whose exit code you are about to test. `PIPESTATUS`/`pipest
 
 `for p in "repo 104"; do set -- $p; gh pr view "$2" --repo "$1"; done` works in bash and silently breaks in zsh: `$1` becomes the whole `"repo 104"` string and `$2` is **empty**. The failure does not name the empty argument — `gh pr view ""` falls back to resolving the current branch, so it reports `could not determine current branch: fatal: not a git repository`, which reads as a cwd problem in a directory that is genuinely not a repo.
 
-Never pack multiple fields into one loop item. Write one explicit command per item, or use two parallel arrays, or `read a b <<< "$line"`. zsh's explicit split is `${=p}` if a split is truly wanted.
+Never pack multiple fields into one loop item. Write one explicit command per item. Two parallel arrays or `read a b <<< "$line"` also avoid the split, but they still expand a variable into the command, so the next paragraph applies. zsh's explicit split is `${=p}` if a split is truly wanted.
+
+A loop variable expanded into a command's path argument (`for r in a b; do git -C $r ...; done`) stops the call with `A variable in this command can't be checked before it runs` and waits for the user; treat an assigned one (`R=/x; git -C $R`) the same when it names a repo or directory to operate on. Write the values out literally, every repo as its absolute path, all in the same Bash call joined with `;` (`git -C /abs/repo-a log -1; git -C /abs/repo-b log -1`) — separate calls each cost a tool turn (`file-operations.md`〈Tracing → read once〉). This covers iterating over repos or paths. The variables other sections of this file write on purpose — `$H` and `"${H}:path"`, `$?`, `"$LOG"` — are a different case and stay as written.
 
 ## Bash: zsh Aborts on Unquoted `?` and `*` — gh api URLs Are the Common Case
 
@@ -76,6 +78,19 @@ Validate the range's shape before handing it to git: it must contain `...`, and 
 Nothing errors and the empty array is well-formed, so `[]` reads as "no reviewer assigned" — wrong on exactly the PRs furthest along, and on a re-review round that is every PR in front of you. The REST field `requested_reviewers` behaves identically.
 
 Never ask for `reviewRequests` alone: write `--json reviewRequests,reviews` and treat a non-empty `reviews` as assigned. Both fields are valid on `gh pr list --json` too.
+
+## gh: `--match-head-commit` Takes the Fetched `headRefOid`, Checked Against the Reviewed SHA
+
+Three merges failed on this flag, each with a SHA written by hand from a prefix seen earlier. `dbfb23c3ade1` passed as-is was rejected with `Could not coerce value "dbfb23c3ade1" to GitObjectID` (2026-10-16). `165671d1fbd8b2d0000000000000000000000000` (2026-10-07, zero-padded) and `6ca41cc85064ef4de5d3e0d47d8b4d2b34b5db4f` (2026-10-16, right 12-character prefix, the other 28 made up) both came back as `Head branch was modified. Review and try the merge again.` — which reads as someone having pushed, while the head had not moved.
+
+Never type the 40 characters. Fetch them, but fetching alone is not the fix: a value read right before the merge always matches the current head, so the flag stops guarding the commit that was reviewed. Compare the fetched value with the reviewed SHA first, and pass the fetched value:
+
+```bash
+H=$(gh pr view 123 -R o/r --json headRefOid --jq '.headRefOid')
+if [ -n "$REVIEWED" ] && [ "${H#"$REVIEWED"}" != "$H" ]; then gh pr merge 123 -R o/r --merge --delete-branch --match-head-commit "$H"; else echo "stop: head $H, reviewed '$REVIEWED'"; fi
+```
+
+`REVIEWED` is the SHA the review was done on, copied from a record made in the turn the review was done — the SHA that turn printed or cited, the posted review comment, `PLAN.md`, or a ref the review step wrote (`git rev-parse <ref>`). A status check run later does not count, even in an earlier turn. Never fetch it in the same call as the merge: a prefix read a moment ago always matches `H`, which is the failure above with one more step. No such record → stop and ask. The `-n` test is load-bearing: an empty `REVIEWED` is a prefix of every string and would let any head through.
 
 ## Agent: A `fork` Subagent Ignores the `model` Parameter
 

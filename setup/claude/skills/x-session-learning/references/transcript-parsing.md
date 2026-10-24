@@ -1,6 +1,6 @@
 # Transcript Parsing Reference
 
-解析 session JSONL 的機制與陷阱。以下每一條都對應一個已實際發生的解析錯誤，其共同性質是產生錯誤數值而非拋出錯誤，因此不會在執行時被發現。各節標有自己的量測日期；未標者量測於 2026-08-19，樣本為當時 `~/.claude/projects/` 下的 248 個 session。
+解析 session JSONL 的機制與陷阱。以下每一條都對應一個已實際發生、或已量測重現的解析錯誤，其共同性質是產生錯誤數值而非拋出錯誤，因此不會在執行時被發現。各節標有自己的量測日期；未標者量測於 2026-08-19，樣本為當時 `~/.claude/projects/` 下的 248 個 session。
 
 ## 檔案位置
 
@@ -48,6 +48,8 @@ cache hit 為比值，兩種算法的差距在 0.2 個百分點以內，因此�
 
 第二列是最危險的一種：它是「修好陷阱二之後」的版本，數值反而比錯的版本更離譜，而且兩次都不會拋錯。產出報告前對帳（分項加總 == 總數）能抓到不一致，但抓不到這一種——兩個數字同源，會一起錯。
 
+鍵對了還不夠：記錄的來源要先限定在 `type == "assistant"`，見陷阱六。
+
 ## 陷阱三：使用者訊息分布在兩種 record
 
 `type=user` 僅涵蓋輪次邊界送達的訊息。mid-turn 送出的訊息（隨 tool result 一併呈現者）不產生 `type=user` record，僅存在於 `queue-operation`。一個 session 的四次推翻中有三次屬於後者，只掃 `type=user` 會全部遺漏。
@@ -79,6 +81,24 @@ cache hit 為比值，兩種算法的差距在 0.2 個百分點以內，因此�
 | `claude-opus-5-5` | 14,694,578 | 586,558 | 0 | 0 |
 
 cache 兩欄恆為 0，每次呼叫的 input 都是全價。因此 advisor 另列一行，不併進 session model 的分布，也不放進 cache 效率的分母——放進去會把 cache hit 拉低，而那不是主對話的 context 重用問題。advisor 的呼叫次數取 `type == "advisor_message"` 的項目數，不取 `server_tool_use` block 的出現次數：後者隨 record 重複出現，未去重時會多算。
+
+## 陷阱六：`api-request-blob` 帶著工具呼叫的副本，不限定記錄型別會灌水
+
+v2.1.300 起（release note：「Changed local session transcripts to also record each API request's system prompt, tools and parameters」），transcript 大量記下每次 API 請求送出的內容（更早的 session 已有少量，數字見下），分成 `api-request`、`api-request-shape`、`api-request-blob` 三種 record。`api-request-blob` 的 `message` 是對話內容的副本，其中 `role` 為 assistant 的那些帶著原本的 `tool_use` block（block 自己的 `id` 還在），但外層 `message` 沒有 `id`。照陷阱二的鍵 `(message.id, block.id)` 去重時，副本的鍵是 `(None, block.id)`，和原呼叫合併不了，每個被重播的呼叫就多算一次；依 `message.id` 分組時，這些副本全落在 `None` 那一組，被算成一個很大的平行批次。
+
+哪些計數只取 `type == "assistant"`、哪個例外，寫在 SKILL.md §1 開頭那句，這裡不重列。例外的理由：User pushback 照陷阱三取 `type=user` 與 `queue-operation`，把整個 §1 都限定成 assistant，推翻次數會恆為 0。
+
+量測於 2026-10-20，3 個 v2.1.302–303 的 session：
+
+| session | 只取 `type=assistant` | 不限型別，鍵 `(message.id, block.id)` | 覆驗：`tool_result` 的不重複 `tool_use_id` | `None` 那一組的大小 |
+|---|---|---|---|---|
+| A（v2.1.303） | 76 | 136 | 76 | 60 |
+| B（v2.1.302） | 1133 | 1587 | 1133 | 454 |
+| C（v2.1.303） | 229 | 292 | 229 | 63 |
+
+不限型別、只按 `block.id` 去重，三個 session 也都回到 76 / 1133 / 229，表示副本只是重播既有的呼叫，灌水來自 `message.id` 為空。輪次只多 1（`None` 被當成一個 id）。三個 session 中帶 `usage` 的 blob 都是 0 個，token、model、cache 不受影響。這類 record 在 v2.1.290–299 的 83 個 session 裡只有 451 個 blob（對 17233 筆 assistant record），v2.1.300 以上的 20 個 session 有 2989 個（對 4067 筆）。
+
+這一條還沒出現在任何一份報告裡：以 `Session Learning Report` 與 `**Tools**` 兩個字樣搜 v2.1.300 之後的 session transcript，只命中本 skill 自己的載入文字，沒有找到印出過的報告。它會出現的條件是解析時沒限定記錄型別，而〈產出前對帳〉抓不到——分項與總數取自同一批 record，會一起灌水。
 
 ## assistant record 的其他欄位
 
@@ -118,4 +138,4 @@ effort 的情況相同：量測當時 `arx-cluster-ops` 宣告 `effort: normal`�
 
 對成本判讀的影響：per-model 分布仍然無法指認**自動觸發的** skill 跑在哪個 model 上（那些 turn 的 model 一律等同 session），但 slash 開起來的那一輪現在可以，非 opus 的 turn 就是它。effort 那半不在這次複驗範圍內，維持未解。
 
-複驗方式：重跑上述演算法，並且**務必分開 slash 與 tool 兩條路徑**——不分路徑會像 2026-08-19 那樣把兩個不同的結果混成一個結論。
+複驗方式：重跑上述演算法，並且**務必分開 slash 與 tool 兩條路徑**——不分路徑會像 2026-08-19 那樣把兩個不同的結果混成一個結論。v2.1.300 之後的 session 重跑時，先只取 `type == "assistant"` 的 record（陷阱六），否則算法二的 `Skill` tool_use 會連副本一起被數到。
