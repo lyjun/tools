@@ -9,7 +9,7 @@ model: haiku
 每個觸發場景下都必須依本 skill 走完對應 section 的 checklist，不得跳步、不得只取單一段落作為依據。歷史 systemic 失誤源：
 
 - Branch name 帶 issue number（漏看「`<issue-slug>` 與 branch name 無關」條款）
-- Cleanup 漏 stop devcontainer（造成 docker mount 持續佔住 worktree path）
+- Cleanup 漏 stop devcontainer（造成 docker mount 持續佔住 worktree path），或只刪 container 沒刪 image（每個約 4.8GB 留在 docker）
 - Worktree session 中 rebuild 失敗未走 recovery 路徑
 
 ## 目錄結構
@@ -188,14 +188,18 @@ review 別人的 PR 時直接在他的 branch 上補 commit（例如文件修正
      - 其他 exit code → 查詢失敗（斷網、認證），不能當成「遠端已刪」
    - **detached HEAD 的**：`git -C <path> log --oneline origin/develop..HEAD` 要是空的。step 3 的 `git status` 只看未 commit 的變更，detached 上已 commit 沒推的東西在 step 5 會直接丟掉
 3. 對 step 1 列出的每一個路徑跑 `git -C <path> status --porcelain`，輸出必須是空的。未追蹤的檔案（`??`）也算，submodule 裡的修改、未追蹤的檔案與新 commit 會以 ` M <submodule 路徑>` 出現，同樣算。接著對同一個路徑跑 `git -C <path> submodule foreach --quiet --recursive 'git log --oneline HEAD --branches --not --remotes; git stash list'`，要 exit 0 而且輸出是空的。沒有 submodule 的路徑直接得到這個結果，所以每個路徑都跑，不必先判斷補過沒有。這一道看得到上層 porcelain 看不到的三種東西：submodule 的 HEAD 上沒推、又已被上層記錄的 commit（`submodule update` 之後 HEAD 是 detached，不屬於任何 branch，所以 `HEAD` 與 `--branches` 都要寫）、submodule 裡其他本機 branch 沒推的 commit、submodule 的 stash（2026-10-18 實測三種都列得出來，上層 porcelain 三種都是空的；乾淨與沒有 submodule 的路徑都是 exit 0、空）；exit 不是 0 是沒量到（例如 submodule 的 gitdir 壞了，同日實測 exit 128、stdout 空），不能當成乾淨。兩道都在 host 跑，worktree 的 container 內不能跑 git（見〈建立流程〉step 5）。任一道有輸出或沒有 exit 0，就停下來把輸出交給使用者決定
-4. **對 step 1 列出的每一個路徑**，若其 devcontainer 仍在執行，先 stop（N 個目錄就跑 N 次；`<worktree-path>` 就是 step 1 印出的那個絕對路徑，label 比對的是絕對路徑）：
+4. **對 step 1 列出的每一個路徑**，刪掉它的 devcontainer 與 image（N 個目錄就跑 N 次；`<worktree-path>` 就是 step 1 印出的那個絕對路徑，label 比對與 hash 都用絕對路徑）：
 
    ```bash
-   CONTAINER_ID=$(docker ps --filter "label=devcontainer.local_folder=<worktree-path>" --format "{{.ID}}")
+   CONTAINER_ID=$(docker ps -a --filter "label=devcontainer.local_folder=<worktree-path>" --format "{{.ID}}")
    [ -n "$CONTAINER_ID" ] && docker rm -f "$CONTAINER_ID"
+   H=$(printf '%s' "<worktree-path>" | shasum -a 256 | cut -d' ' -f1)
+   for IMG in $(docker images --filter "reference=vsc-*-${H}*" --format '{{.Repository}}:{{.Tag}}'); do docker rmi "$IMG"; done
    ```
 
    docker mount 持續佔住 worktree path 會讓後續 `git worktree remove` 卡 untracked artifacts，且容器孤兒佔用 docker 資源。
+
+   image 要另外刪：`docker rm` 只刪 container，devcontainer 建出的 image 會留下來。它的名稱是 `vsc-<資料夾名>-<worktree 絕對路徑的 sha256>-features`，綁在路徑上，worktree 刪掉之後不會再被重用，一個約 4.8GB（2026-10-29 實測：一次清理只刪了 container，4 個 image 留在 docker 裡，名稱裡的 hash 與各自路徑的 sha256 逐一對上）。`docker ps` 帶 `-a` 是因為停止的 container 仍引用 image，不刪掉它 `rmi` 會失敗。`docker rmi` 不加 `-f`：還有 container 引用時它以 `conflict` 拒絕（同日實測），遇到就停下來把輸出交給使用者，不改用 `-f`。
 
 5. 對 step 1 列出的**每一個路徑**執行 `git worktree remove <path>`
    - 若因 untracked build artifacts 失敗，**必須暫停並明確取得使用者同意**後才加 `--force`，禁止在描述中自行判定後直接執行（補過 submodule 的那一種見下一列）
