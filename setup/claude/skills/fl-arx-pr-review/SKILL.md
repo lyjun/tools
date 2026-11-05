@@ -105,9 +105,27 @@ carries.
 
 ### Step 1 — Understand-all (the anchor; do this before ANY finding)
 
-Read every PR at **comprehension depth** — descriptions, linked issues, commit messages,
+Read every PR at **comprehension depth** — descriptions, linked issues (read through their last comment — see x-pr-review 〈Comprehension first〉), commit messages,
 the diff *shape* (which files/areas, not line-by-line yet), and the product spec that governs
 the change (see the `產品規格` bullet below for where it lives). Then state, as one briefing:
+
+- **Outer-edge block, first** — when the shape did not move but what the outermost consumer
+  receives in some situation did (a status code, a case moving between an error and a normal
+  response, an existing field filled for the first time), open the briefing right after the
+  spec line with two lines, both always present:
+
+  ```text
+  client 收到:<情境>:<改前> → <改後>
+  欄位:<proto 名 = API 名 = client 名>,既有/新增(<定義 file:line> → <client 讀取 file:line>)
+  ```
+
+  No field involved → `欄位:無(走錯誤路徑)`. Every sentence or table cell in the briefing
+  that says what a layer this change touches returns says 「回錯誤 `<code>`」 or 「不回錯誤,
+  正常回應,`<field>=<value>`」, never a bare 「回 `<field>=<value>`」. It goes first because the per-PR bullets below
+  name the field, and 「proto 沒變」 there does not tell the reader the field already existed —
+  they read an existing field newly filled as a new format. `x-pr-review`〈Comprehension
+  first〉 carries the same block; it is restated here because that skill loads at Step 3,
+  after this briefing is written.
 
 - **Per PR**: what problem it solves and why this approach — sourced from its description /
   issue, not guessed from the diff.

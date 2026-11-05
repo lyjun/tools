@@ -126,7 +126,10 @@ PR 的 base：下游開 PR 時 base 選上游的 branch，不是 develop——�
 
 review 別人的 PR 時直接在他的 branch 上補 commit（例如文件修正）。取代建立流程的 step 1、2、4、6：
 
-1. 先確認 head 在 origin 上：`gh pr view <n> --repo <owner>/<repo> --json isCrossRepository,headRefName`。`isCrossRepository` 為 `true` 表示 head 在 fork 上，本流程不涵蓋——不開 worktree，改在 review comment 裡提建議
+1. 先確認 head 在 origin 上：`gh pr view <n> --repo <owner>/<repo> --json isCrossRepository,headRefName,baseRefName`。`isCrossRepository` 為 `true` 表示 head 在 fork 上，本流程不涵蓋——不開 worktree，改在 review comment 裡提建議
+
+   接著在本機判斷這條 branch 跟 base 有沒有衝突（`<base>` 取自上面的 `baseRefName`）：`git -C <main clone> fetch origin <base> <headRefName>`，再跑 `git -C <main clone> merge-tree --write-tree --name-only origin/<headRefName> origin/<base>`。exit 1 表示有衝突（之後列出的就是衝突檔），這時把「rebase 到 base，再以 step 3 的 `--force-with-lease` 推上」排進交給使用者的步驟清單第一項，不提 merge commit；使用者批准這份清單，就是 step 3 所說的「明確要求 rebase」。exit 0 表示沒有衝突，其他 exit code 表示沒量到，停下來回報。
+   這件事要在規劃時查，不能等 push 之後：GitHub 對有 merge conflict 的 PR 不跑 `pull_request` workflow（docs.github.com/en/actions/writing-workflows/choosing-when-your-workflow-runs/events-that-trigger-workflows,〈pull_request〉段的 note），推上去的 commit 不會有 CI，等 CI 的那一輪只會空等。
 2. 不開新 branch，以作者那條的遠端 tip 建一條追蹤它的本機 branch（`<dir-name>` 來自建立流程 step 3）：
 
    ```bash

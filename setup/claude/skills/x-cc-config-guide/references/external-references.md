@@ -22,7 +22,7 @@
 ## 規劃
 
 - **Claude Code 內建 `/batch`**（在 claude 執行檔裡，錨點 `## Phase 1: Research and Plan`）：不是一般的規劃方法，是把大型改動拆給多支背景 agent、各開一個 PR 的流程（研究與規劃 → 計畫核准後派工 → 追進度）。回答：一個改動拆成多個獨立單位時，怎麼切、怎麼派、怎麼追。
-- [addyosmani/agent-skills — skills/planning-and-task-breakdown/SKILL.md](https://github.com/addyosmani/agent-skills/blob/eb07f19f/skills/planning-and-task-breakdown/SKILL.md)：〈Step 4〉每項的 Acceptance criteria 與 Verification、〈Step 5〉每 2–3 項一個 checkpoint、末段指向 Definition of Done。回答：每一項要寫什麼才算可驗證，以及逐項驗收與每次都要過的固定標準怎麼分工。
+- [addyosmani/agent-skills — skills/planning-and-task-breakdown/SKILL.md](https://github.com/addyosmani/agent-skills/blob/eb07f19f/skills/planning-and-task-breakdown/SKILL.md)：〈Step 4〉每項的 Acceptance criteria 與 Verification、〈Step 5〉每 2–3 項一個 checkpoint、末段指向 Definition of Done。回答：每一項要寫什麼才算可驗證，以及逐項驗收與每次都要過的固定標準怎麼分工。2026-11-04 在 `301b02b` 重讀 Step 5，內容未變：checkpoint 只是每 2–3 項一次的 build／test 關卡，沒講實機要從哪一層量。
 - [addyosmani/agent-skills — references/definition-of-done.md](https://github.com/addyosmani/agent-skills/blob/eb07f19f/references/definition-of-done.md)：〈Definition of Done vs. Acceptance Criteria〉表與〈Correctness〉。回答：哪些標準是每個改動都要過的（沒有回歸、在執行期實際驗過）、哪些依項目而變。只到清單層級，沒寫怎麼列出要回歸的路徑。
 - [addyosmani/agent-skills — skills/spec-driven-development/SKILL.md](https://github.com/addyosmani/agent-skills/blob/eb07f19f/skills/spec-driven-development/SKILL.md)：每項 Acceptance／Verify 兩欄、階段間設 checkpoint。回答：與 planning 那份相同的問題，從規格出發的版本。
 - [addyosmani/agent-skills — skills/incremental-implementation/SKILL.md](https://github.com/addyosmani/agent-skills/blob/eb07f19f/skills/incremental-implementation/SKILL.md)：「After each increment… existing tests still pass」。回答：每一片之後要過什麼。只要求既有測試，與 x-plan〈每一片的循環〉同一層。

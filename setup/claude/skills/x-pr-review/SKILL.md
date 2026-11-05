@@ -54,9 +54,11 @@ current head answers it outright.
 
 ## Comprehension first (Case 1 & 2a — before any critique)
 
-Before reading the changed code or raising findings, state in 1–3 lines: **what problem does this change solve, and what is the solution approach?** Source it from the PR description / commit messages / linked issue. (The format-change before→after and the layer-handoff walked case below sit outside this limit.)
+Before reading the changed code or raising findings, state in 1–3 lines: **what problem does this change solve, and what is the solution approach?** Source it from the PR description / commit messages / linked issue. (The format-change before→after, the outer-edge block and the layer-handoff walked case below sit outside this limit.)
 
 **另外找出這個改動歸哪一份產品規格管,寫出規格的 `檔案:行` 與整份規格的 GitHub 連結(`https://github.com/ardge-labs/ardge-project-issues/blob/main/<路徑>`,路徑中的空白寫成 `%20`),或寫「查過需求 repo,沒有對應規格」。** PR 描述與 linked issue 講的是作者要解什麼,規格講的是產品答應了什麼,兩者不同,而 finding 的定調常掛在後者:linked issue 一句「使用者能修改既有 bond」可以讀成成員編輯,而規格上只有綁定與整個解除兩個操作,同一組改動最大的一則 finding 因此從「補一道檢查」變成「這條路該不該存在」。判準是這個改動有沒有使用者看得到的操作,有就一定有規格。本 workspace 的需求 repo 是 `ardge-project-issues/`,分 `system-application/<app>/` 與 `system-mechanism/`;引用它的 finding 依第 7 關的第三類來源處理。
+
+**PR 描述連到的每個 issue 都讀到最後一則留言,並各寫一行對照。** 先跑 `python3 ~/.claude/skills/x-pr-review/scripts/linked-issues.py <owner>/<repo>#<num>`(描述用快照時加 `--body-file <檔>`),它從描述文字抓出連到的 issue,印出各自的留言數與最後一則的時間。留言裡的連結(證據檔、截圖、log)腳本逐條列在 `ATTACHMENT:`,一併打開。〈理解〉底下每個 issue 寫一行 `<repo>#<N>:讀到第 K/K 則(最後一則 <時間>);附件開了 A/A`,K 要對得上腳本印的 `comments=`,A 要對得上 `attachments=`;打不開的附件照實寫哪一個;`VERDICT: unavailable` 時照實寫哪一個 issue 沒讀到。用到附件裡的讀數時引檔名與那一行。理由:issue body 是開單當下的快照,之後找到的根因與解法、部署前提(「需重新初始化」這類)、驗證時的實機讀數都在留言裡,body 裡的舊說法常已被留言推翻。issue 的類型只決定誰是判準:回報缺陷的單,留言就是目前的狀態,與 body 衝突時以留言為準;規格或功能單,判準仍是上一段的規格檔,留言只用來標出規格還沒跟上的地方,寫成 `question`。實例:同一個 PR 的三次獨立 review 都只用到它連到的 bug 單的 body,兩次被 body 裡已過時的根因帶偏,三次都把「舊機器怎麼升級」列成 finding;答案(需重新初始化)與 QA 的實機讀數都在後面的留言裡。
 
 This is the foundation for design critique — you cannot judge whether the solution targets the root cause (根因對齊) without first understanding the problem. It also keeps you and the user on the same understanding of the change before diving into the diff.
 
@@ -65,6 +67,17 @@ This is the foundation for design critique — you cannot judge whether the solu
 替換規則:`理解` 的**第一句不准**出現上游 / 內部的名詞(元件名、key 名、旗標名),**也不准預設讀者已經知道某個機制存在** —— 讀者缺的往往是前提,不是名詞,所以只擋名詞的版本會放過「名詞乾淨但仍然從機制講起」的寫法。先把因果鏈寫完 —— 壞的是什麼、為什麼會惡化、為什麼原有機制沒攔住 —— 機制名詞之後才出現,且只在支撐這條鏈時出現。例:「kube-apiserver 內建 compactor 要開機後 10 分鐘才第一次真的壓縮」違規(`compactor` 是上游元件名,而「壓縮」預設讀者已經知道有東西需要被清掉);「etcd 改一個值不是覆蓋,是再加一筆,舊的那筆要靠清理才會消失」合規,而且走到同一個結論。第一句不靠附子句豁免。之後的句子,寫完逐一列出 `理解` 裡的每個上游 / 框架名稱(middleware、SDK 型別與函式、旗標),回文字裡找它第一次出現的那句有沒有說它在這條流程裡做什麼的子句,找不到就補一行括號;判準與下面 `問題` 欄那條逐詞檢查同一套,只是欄位不同。指稱一整條鏈的集合詞(「gin middleware」「那些函式」)要點名成員,一個一個寫出來。repo-local 與作者自取的詞照 Output model〈Repo-local 詞彙〉那兩段處理。
 
 **Format-change PRs: show a before→after example.** When the change alters a serialized / on-disk format (config schema, proto wire, DB schema, API payload), the 理解 carries a concrete before→after of the *shape* (minimal JSON/struct snippets), not just prose. A data-shape diff makes the change graspable faster than words — where a field moved, whether its meaning changed, which keys disappear.
+
+**Outer-edge behaviour changes: a two-line block before the first field name.** When the shape did not move but what the outermost consumer receives in some situation did — a different status code, a case moving between an error and a normal response, an existing field filled with a value it never carried before — write this block, both lines, above the first sentence of 理解 that names any field it lists (the first sentence stays free of internal names per the rule above, so the block lands right after it):
+
+```text
+client 收到:<情境>:<改前> → <改後>;<情境>:<改前> → <改後>
+欄位:<各層的名字,proto 名 = API 名 = client 名>,既有/新增(<定義 file:line> → <client 讀取 file:line>)
+```
+
+No field involved (a pure status-code change) → write `欄位:無(走錯誤路徑)`, so a missing line reads as skipped rather than not applicable. Every sentence or table cell in 理解 that says what a layer this change touches returns says 「回錯誤 `<code>`」 or 「不回錯誤,正常回應,`<field>=<value>`」; a bare 「回 `<field>=<value>`」 does not say which.
+
+「proto 沒變」 is not a substitute for the 欄位 line. It says the schema did not move; the reader still cannot tell an existing field newly filled from a new one, and reads it as a new format — the block puts 既有 and the client's own name in front of them before any sentence uses the field. Measured on one review: a report carrying only 「proto 沒變」 was read that way, and of five fresh reruns under the earlier wording the two that wrote only that sentence repeated it, while the three that stated the field already existed did not.
 
 **Layer-handoff claims: walk one case before and after.** When your own 理解 draft contains a sentence of the shape "A computes / writes X, but B does not see it, sees a stale value, reads it before A writes it, overwrites it, or sees it when it should not" — in a 中文 draft the literal signals are `看不到`、`讀不到`、`拿不到`、`讀到舊的`、`沒傳到`、`沒帶過去`、`被蓋掉`、`順序不同` — follow the 1–3 lines with one concrete case walked twice — before the change and after — one line per step, listing only the values that change at that step (what the consumer reads, plus the final outcome). Write it as a fenced ```text block; the diagram term check in 〈Repo-local 詞彙〉 applies to it. It lives in the internal report only; the posted recap stays one to two sentences, since the author already holds the flow.
 
@@ -200,6 +213,7 @@ Triggered by: "同事回覆了幫我看", "幫我 review 他的回覆", PR URL +
 1. **Read the reviewer's original comments** — understand what each comment requires
 2. **Read the author's responses** — check if they correctly understood each original comment
 3. **Look at the corresponding commits/diff** — verify the code matches the stated responses
+4. **Re-read the linked issues** — rerun `linked-issues.py` and read every linked issue through its last comment and every listed attachment again, then write the 〈Comprehension first〉 line (`讀到第 K/K 則…;附件開了 A/A`) into this round's report before judging the replies — a decision or a reading posted there can settle or reopen a finding. Do not limit this to comments newer than your last review: the earlier round may never have read the older ones, and its K/K line sat in an internal report this session does not have
 
 Use the original comments as the verification framework; commits are supporting evidence, not the starting point.
 
@@ -386,7 +400,7 @@ When the run finishes, give the user an **internal report** (not posted, no edit
 
 報告第一行是規格出處,獨立一行、不算進〈理解〉:照抄上面 Comprehension first 找到的連結,寫成「此 PR 對應 <規格名> — <連結>」,沒有對應規格就照抄「查過需求 repo,沒有對應規格」。
 
-1. **理解** — the problem this change solves + the solution approach (1–3 lines, matching *Comprehension first*, plus the format before→after / layer-handoff walked case when they apply), then one line of judgment: direction right? mergeable? needs changes?
+1. **理解** — the problem this change solves + the solution approach (1–3 lines, matching *Comprehension first*, plus the format before→after / outer-edge block / layer-handoff walked case when they apply), then one line of judgment: direction right? mergeable? needs changes?
 2. **Findings** — each gate survivor rendered as an atom (below). If nothing survives, say so plainly ("沒看到要改的地方") — never pad a clean verdict or manufacture nits.
    **組裝時去重一次。** 把每則在 gate 第 6 關寫下的那句動作排在一起,**同一個 code 物件上的同一個動作**只留一則——留 `file:line` 指向作者真的會打開的那一處,其餘併進去。判準是**物件**不是動詞:兩個不同檔案的 typo 各自成一則,而「把這幾份 PR 一起合」與「補上那份 values 缺的欄位」是同一則。這一步只能在所有候選都在手之後跑,所以它住在這裡而不是 gate 裡;PR 數量越多越需要,因為同一個落地順序問題可以在每份 PR 上各寫一則、每則都是真的、每則都過關,作者收到的是重複的 comment。
 

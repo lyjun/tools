@@ -253,8 +253,10 @@ if [[ -n "$five_hour_pct" || -n "$seven_day_pct" ]]; then
             rate_7d_color="$RED"
         fi
 
+        # Under 100h show hours so "2d" can't be misread; both units are ceilings
+        # ("↓ 5d" = resets within 5 days, i.e. 96–120h left).
         seven_secs=$((seven_day_reset - now))
-        if [[ $seven_secs -ge 86400 ]]; then
+        if [[ $(( (seven_secs + 3599) / 3600 )) -ge 100 ]]; then
             seven_countdown="↓ $(( (seven_secs + 86399) / 86400 ))d"
         else
             seven_countdown="↓ $(format_hours_ceil $seven_secs)"
