@@ -8,7 +8,7 @@
 |---|---|---|
 | Claude Code 內建 skill | claude 2.1.318 | prompt 寫在執行檔裡，沒有獨立檔案。`B=$(python3 -c 'import os,sys;print(os.path.realpath(sys.argv[1]))' "$(command -v claude)")`，`file -b "$B"` 要含 `Mach-O` 或 `ELF`——印出 `shell script` 表示 `$B` 是包裝腳本（終端機會在 PATH 最前面放自己的 `claude` shim，cmux 實測如此），照樣抽下去錨點會全數搜不到，看起來像 prompt 改版了，這時改用 `which -a claude` 列出的下一個路徑。確認是執行檔後 `strings -n 8 "$B" > <scratch>/cc-strings.txt`，再 `grep -n -F '<錨點>'` 定位。用錨點字串，不用行號：每次改版行號都會變。錨點只取 ASCII 片段——prompt 裡的破折號在執行檔中存成跳脫序列，照畫面抄會搜不到。`strings` 那一步可能被權限擋下（auto mode 實測擋過）；被擋時不要換指令繞過，在做法表下那一行寫「內建原文未讀：被權限擋」，並請使用者在提示列用 `!` 前綴自己跑那兩行。版本：`claude --version` |
 | [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) | commit `eb07f19f` | `gh api "repos/addyosmani/agent-skills/contents/<路徑>" --jq .content \| base64 -d`。版本：`gh api repos/addyosmani/agent-skills/commits/HEAD --jq .sha` |
-| [obra/superpowers](https://github.com/obra/superpowers) | commit `2ce8aa15` | `gh api "repos/obra/superpowers/contents/<路徑>?ref=<sha>" --jq .content \| base64 -d`。版本：`gh api repos/obra/superpowers/commits/HEAD --jq .sha`。它也收在官方 plugin 市集 `claude-plugins-official`，裝了才會載入；不是內建 |
+| [obra/superpowers](https://github.com/obra/superpowers) | commit `22f0b463` | `gh api "repos/obra/superpowers/contents/<路徑>?ref=<sha>" --jq .content \| base64 -d`。版本：`gh api repos/obra/superpowers/commits/HEAD --jq .sha`。它也收在官方 plugin 市集 `claude-plugins-official`，裝了才會載入；不是內建 |
 
 標「未讀」的條目只確認過路徑存在，沒讀過內容；用到時先讀，讀完把「回答什麼問題」補上。
 
