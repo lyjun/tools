@@ -6,7 +6,7 @@
 
 | 來源 | 上次讀的版本 | 怎麼讀 |
 |---|---|---|
-| Claude Code 內建 skill | claude 2.1.310 | prompt 寫在執行檔裡，沒有獨立檔案。`B=$(python3 -c 'import os,sys;print(os.path.realpath(sys.argv[1]))' "$(command -v claude)")`，`file -b "$B"` 要含 `Mach-O` 或 `ELF`——印出 `shell script` 表示 `$B` 是包裝腳本（終端機會在 PATH 最前面放自己的 `claude` shim，cmux 實測如此），照樣抽下去錨點會全數搜不到，看起來像 prompt 改版了，這時改用 `which -a claude` 列出的下一個路徑。確認是執行檔後 `strings -n 8 "$B" > <scratch>/cc-strings.txt`，再 `grep -n -F '<錨點>'` 定位。用錨點字串，不用行號：每次改版行號都會變。錨點只取 ASCII 片段——prompt 裡的破折號在執行檔中存成跳脫序列，照畫面抄會搜不到。`strings` 那一步可能被權限擋下（auto mode 實測擋過）；被擋時不要換指令繞過，在做法表下那一行寫「內建原文未讀：被權限擋」，並請使用者在提示列用 `!` 前綴自己跑那兩行。版本：`claude --version` |
+| Claude Code 內建 skill | claude 2.1.318 | prompt 寫在執行檔裡，沒有獨立檔案。`B=$(python3 -c 'import os,sys;print(os.path.realpath(sys.argv[1]))' "$(command -v claude)")`，`file -b "$B"` 要含 `Mach-O` 或 `ELF`——印出 `shell script` 表示 `$B` 是包裝腳本（終端機會在 PATH 最前面放自己的 `claude` shim，cmux 實測如此），照樣抽下去錨點會全數搜不到，看起來像 prompt 改版了，這時改用 `which -a claude` 列出的下一個路徑。確認是執行檔後 `strings -n 8 "$B" > <scratch>/cc-strings.txt`，再 `grep -n -F '<錨點>'` 定位。用錨點字串，不用行號：每次改版行號都會變。錨點只取 ASCII 片段——prompt 裡的破折號在執行檔中存成跳脫序列，照畫面抄會搜不到。`strings` 那一步可能被權限擋下（auto mode 實測擋過）；被擋時不要換指令繞過，在做法表下那一行寫「內建原文未讀：被權限擋」，並請使用者在提示列用 `!` 前綴自己跑那兩行。版本：`claude --version` |
 | [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) | commit `eb07f19f` | `gh api "repos/addyosmani/agent-skills/contents/<路徑>" --jq .content \| base64 -d`。版本：`gh api repos/addyosmani/agent-skills/commits/HEAD --jq .sha` |
 | [obra/superpowers](https://github.com/obra/superpowers) | commit `2ce8aa15` | `gh api "repos/obra/superpowers/contents/<路徑>?ref=<sha>" --jq .content \| base64 -d`。版本：`gh api repos/obra/superpowers/commits/HEAD --jq .sha`。它也收在官方 plugin 市集 `claude-plugins-official`，裝了才會載入；不是內建 |
 
@@ -15,9 +15,9 @@
 ## Review／定級
 
 - **Claude Code 內建 `/code-review`**（在 claude 執行檔裡，錨點 `Verify (1-vote`、`mechanism is real, trigger is uncertain`）：多支 finder 各從一個固定角度找候選（逐行掃、被刪掉的檢查在哪重建、沿呼叫者往外查、語言陷阱、包裝層轉發；另有三個 cleanup 角度〔含重用、簡化〕與 altitude、專案慣例各一個角度，錨點 `Correctness bugs always outrank cleanup`，輸出名額不夠時 correctness 優先），每則候選配一支 verifier 判 CONFIRMED／PLAUSIBLE／REFUTED，最後補掃一輪漏掉的。回答：「機制成立但觸發不確定」怎麼定級（PLAUSIBLE，保留不丟）、什麼才算推翻（REFUTED 要能從程式碼建構出來）、找候選要從哪些角度。注意它依 model 與 effort 等級跑不同流程，有的只有單一 pass、沒有獨立驗證；實際跑的是哪一套，看輸出第一行印的流程標籤。
-- [addyosmani/agent-skills — agents/code-reviewer.md](https://github.com/addyosmani/agent-skills/blob/eb07f19f/agents/code-reviewer.md)：第 6 條「If you're uncertain about something, say so and suggest investigation rather than guessing」。回答：拿不準要不要報、要報到什麼程度。
-- [addyosmani/agent-skills — skills/code-review-and-quality/SKILL.md](https://github.com/addyosmani/agent-skills/blob/eb07f19f/skills/code-review-and-quality/SKILL.md)：等級分 Critical／Required／Optional／Nit／FYI。回答：等級怎麼切、各級要作者做什麼。
-- [obra/superpowers — skills/requesting-code-review/SKILL.md](https://github.com/obra/superpowers/blob/2ce8aa15/skills/requesting-code-review/SKILL.md)：未讀。
+- [addyosmani/agent-skills — agents/code-reviewer.md](https://github.com/addyosmani/agent-skills/blob/eb07f19f/agents/code-reviewer.md)：第 6 條「If you're uncertain about something, say so and suggest investigation rather than guessing」。回答：拿不準要不要報、要報到什麼程度。2026-11-06 在 `301b02b1` 重讀，內容未變。
+- [addyosmani/agent-skills — skills/code-review-and-quality/SKILL.md](https://github.com/addyosmani/agent-skills/blob/eb07f19f/skills/code-review-and-quality/SKILL.md)：等級分 Critical／Required／Optional／Nit／FYI。回答：等級怎麼切、各級要作者做什麼。2026-11-06 在 `301b02b1` 重讀：另有「Before reporting a finding, check it against the callers, guards and tests that reach the changed code, and drop it if they rule it out」，是用既有保護排除 finding，不檢查那個保護是否每條路徑都成立。
+- [obra/superpowers — skills/requesting-code-review/code-reviewer.md](https://github.com/obra/superpowers/blob/22f0b463/skills/requesting-code-review/code-reviewer.md)：〈Declined to judge〉，2026-11-06 在 `22f0b463` 讀。回答：reviewer 考慮過而放下不判的項目要逐條交出、附理由，由主線裁決，不能默默丟掉。同目錄的 SKILL.md 只講何時派 reviewer。
 
 ## 規劃
 

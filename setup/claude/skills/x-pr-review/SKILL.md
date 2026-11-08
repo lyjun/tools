@@ -25,6 +25,16 @@ python3 ~/.claude/skills/x-pr-review/scripts/pr-state.py <owner>/<repo>#<num> [-
 
 `--checks` 加印 head commit 的 live CI:每桶的數量、還在跑的名字、失敗的名字,以及 `CHECKS_SETTLED`。**要 approve 之前跑一次帶 `--checks` 的**——PR 描述寫「測試全綠」講的是某個更早的 commit,這一欄講的是 head 現在回報什麼。它只量不判:查詢失敗、或列到的 run 少於 API 自己的 `total_count`、或這個 commit 上根本沒有任何 check,一律報 `CHECKS: unavailable` 並讓整體 VERDICT 跟著 unavailable——空答案不准讀成乾淨的答案。
 
+**approve 之前,內部報告要先寫出下面三行,每行都對到這次要 approve 的 head SHA。** Case 1、2a、2b 都一樣;2b 的範圍見〈Case 2b〉第 5 步。
+
+```text
+correctness:x-code-review <A>...<B> → VERDICT <值>,N 則       或  correctness:small tier(<行> 行 / <檔> 檔,pr-size.sh),未委派
+反駁:<〈交出去之前要過一次獨立反駁〉寫進 ledger 的那行計數>     或  反駁:跳過,<理由>
+覆蓋:pr-files.sh VERDICT <值>,<M>/<M> 檔已標處置
+```
+
+任一行寫不出來就不 approve;要偏離,先在報告裡寫明偏離哪一行、理由,交使用者決定。三行只進內部報告,不寫進貼出的 review(Template A 不列閘門結果)。送出 `gh pr review --approve` 的那一輪,先在文字裡把三行貼出來,再下指令;`--match-head-commit` 用的 `REVIEWED` 只能取三行裡寫的那個 SHA——使用者只回「ok, approve & merge」的短輪次,前面輪次的報告不算數。這一關寫成要產出的三行而不是提醒,是因為「中間級距要委派」早就寫在下面,卻在一次多輪的設計討論之後整段被跳過:作者照建議重寫、使用者說「approve & merge」的那一刻,路徑上沒有任何東西要求拿出 correctness 的結果。
+
 It reports, in this order, `STATE`, `IS_DRAFT`, `AUTHOR`, `ME`, `ME_ENGAGED` (checked across
 review bodies, issue comments **and** inline review comments), `ENGAGED_AT`,
 `ENGAGED_EXCERPT` (the first line of my last trace — enough to tell a real
@@ -214,6 +224,7 @@ Triggered by: "同事回覆了幫我看", "幫我 review 他的回覆", PR URL +
 2. **Read the author's responses** — check if they correctly understood each original comment
 3. **Look at the corresponding commits/diff** — verify the code matches the stated responses
 4. **Re-read the linked issues** — rerun `linked-issues.py` and read every linked issue through its last comment and every listed attachment again, then write the 〈Comprehension first〉 line (`讀到第 K/K 則…;附件開了 A/A`) into this round's report before judging the replies — a decision or a reading posted there can settle or reopen a finding. Do not limit this to comments newer than your last review: the earlier round may never have read the older ones, and its K/K line sat in an internal report this session does not have
+5. **作者在你上一輪之後 push 過 commit → 對新的部分跑 correctness 與反駁** —— 範圍的左邊界取最近一個寫過〈approve 之前〉correctness 行的 SHA,沒有就取 base(第一輪只談了設計、沒跑 correctness 時,沒被重寫的檔也從沒被檢查過),右邊界是現在的 head;呼叫方式照〈Case 2a〉re-review round 那段,但左邊界以本句為準,不取那段的 last-reviewed commit(那段的前提是上一輪已審過 correctness),size gate 量的是這個範圍;範圍內新增的散文行照樣送〈交出去之前要過一次獨立反駁〉的第二類。前四步只回答「作者有沒有回應到 comment」;作者照建議重寫設計時,新寫出的 code 從沒被 review 過。結果填進〈approve 之前〉那三行
 
 Use the original comments as the verification framework; commits are supporting evidence, not the starting point.
 
@@ -439,7 +450,7 @@ The strongest form of this: for **Case 2b**, shape the report you present in con
 **Icon ↔ label** — one icon per item. The Conventional Comments label carries the type; blocking-ness is a separate `(blocking)` / `(non-blocking)` decoration, never a second icon stacked on the item:
 🔴 issue (blocking) · 🟡 issue (non-blocking) · 🔵 nitpick · 💡 suggestion · ❓ question · 📝 note / chore · 👍 praise. On re-review, a prior finding's icon becomes its resolution status instead: ✅ 已解 · ⚠️ 部分/表面 · ❌ 未處理. `praise` 併進 verdict 行,不單獨成項。
 
-**Template A — approve / arc endpoint** (Case 1/2a clean, or 2b fully resolved):
+**Template A — approve / arc endpoint** (Case 1/2a clean, or 2b fully resolved;兩者都要先寫出〈approve 之前〉那三行):
 
 ```text
 LGTM 👍

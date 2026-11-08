@@ -64,6 +64,7 @@ Cache hint 只作用於 #3。
 4. 每次失敗間隔 1-2 秒（避免觸發 fail2ban / IDS）
 5. 第一個成功 → 連線、更新 cache
 6. 全部失敗 → 列出試過的 credentials，請使用者更新 config 或提供 inline credentials
+7. 等機器重開時的認證失敗另見 `remote-ssh.md`〈等機器重開〉：失敗的那組本 session 不再用，cache 命中也跳過
 
 ## #2 Hard-fail（使用者明示 credential）
 

@@ -37,6 +37,43 @@ Flag only instances the diff introduces, each with its failure scenario.
   coercion; Python mutable default arguments and late-binding closures; shell unquoted
   expansion; SQL string concatenation).
 
+## Angle: guarantees the change relies on
+
+Applies when the diff puts new behaviour behind an earlier step's success — a new call after
+`if err != nil { return }` on that step, after a boolean it returned, or after a loop that is
+meant to have cleaned something up — or when a comment the diff adds says another function has
+already ensured something ("X has taken Y out by now"). The new code is right only if that
+guarantee holds on every path where the earlier step reports success. Those paths usually sit
+in lines the diff does not touch, so reading the `+` side never shows them, and a reviewer who
+reads the comment tends to repeat it as a fact.
+
+1. Name the guarantee in one sentence, and the function meant to provide it: the one whose
+   result the new code tests (the call whose `err` or return value the gate checks), not a
+   helper a comment or your own reading credits with the work. Start the path list there.
+2. List every path on which that function reports success — each `return nil`, `return true`
+   or normal return, and each `continue` or early exit that skips an element of the loop doing
+   the work — with its `file:line`. Follow the work into every function it delegates to, until
+   each path either establishes the guarantee or does not: listing only the outer loop misses an
+   early `return nil` inside the helper it calls.
+3. Against each path, write whether the guarantee holds there and the line that makes it hold.
+
+A path where it does not hold is a candidate. Its failure scenario is the state that takes that
+path, followed by what the new behaviour then does to it.
+
+Whether or not the trigger above matched, the same list is owed when a guarantee is used to clear
+a concern: when a VERIFY verdict, the Summary, or a "checked and found fine" note dismisses
+something because "X guarantees Y", it cites the path list from step 2 for X. That includes
+VERIFY's "already guarded elsewhere" and "the caller already provides the guarantee": when the
+guard is another function's success rather than a check on the flagged line, one cited line does
+not refute. A dismissal that rests on the guarantee without the list is an unchecked claim — keep
+the candidate PLAUSIBLE instead of dropping it; where no candidate was raised, write the claim as
+a row in `## Relied-on guarantees` marked `not listed — unchecked`, so the reader sees it was
+never checked.
+
+Write the list in the output's `## Relied-on guarantees` section whenever this angle applied or a
+dismissal rests on a guarantee, including when every path holds, so the reader can check the
+paths you counted.
+
 ## Phase 3, normal run: sweep pass
 
 Runs after Phase 2 VERIFY. **Not in an auto-fix re-review** — that run does the recheck below

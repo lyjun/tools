@@ -128,8 +128,8 @@ class Report(HTMLParser):
         if self.chart_title_next and data.strip():
             self.chart_title = data.strip()
             self.chart_title_next = False
-            self.tool_errors_found |= self.section == "section-work" and self.chart_title.startswith("Tool Errors")
-        in_tool_chart = self.section == "section-work" and (self.chart_title or "").startswith("Tool Errors")
+            self.tool_errors_found |= self.chart_title.startswith("Tool Errors")
+        in_tool_chart = (self.chart_title or "").startswith("Tool Errors")
         if in_tool_chart and data.strip():
             if self.cur_class == "bar-label":
                 if self.bar_label:
@@ -192,7 +192,7 @@ def main():
     if not p.key_pattern:
         problems.append("[shape] Key pattern (p.section-intro in section-wins) not found")
     if not p.tool_errors_found:
-        problems.append("[shape] Tool Errors chart (chart-title 'Tool Errors…' in section-work) not found")
+        problems.append("[shape] Tool Errors chart (chart-title 'Tool Errors…') not found")
     elif not p.tool_errors:
         problems.append("[shape] Tool Errors chart found but 0 bar rows read")
     if p.bar_label:  # last label never got a value

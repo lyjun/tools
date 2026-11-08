@@ -24,7 +24,7 @@ IP 與帳號密碼按以下優先序取得（高 → 低）：
 - **嚴禁**使用 MEMORY.md 中的 IP / credentials（可能已過期）
 - **嚴禁**將 credentials 寫入 MEMORY.md 或任何由 AI 主動建立的持久化檔案
 - `~/.config/arx/hosts.yaml` 由使用者主動維護，可讀；連線失敗時**不可**由 AI 自行修改它，請使用者更新
-- 首次連線前先執行 `ping` 或簡單 SSH 測試確認可達性
+- 首次連線前先用 `ping` 或 `nc -z <host> <ssh_port>` 確認可達性（不送密碼）
 
 ## 複雜指令處理
 
@@ -52,6 +52,8 @@ SSHPASS='<pw>' sshpass -e ssh -o PubkeyAuthentication=no user@host "bash /tmp/sc
 ```
 
 heredoc 若間歇失敗也適用——只要失敗過一次，當次 session 後續一律改用 SCP。
+
+前提是同一組密碼的單行登入成功過。單行登入也回 `Permission denied`（sshpass exit 5）就是密碼不對，照〈等機器重開〉的認證失敗處理，不換寫法重試。
 
 ### Python 解析腳本不要嵌在 bash -c 內
 
@@ -101,6 +103,27 @@ EOF
 ```
 
 例外：需要根據前一個 check 結果決定下一步（dependent check）才分開。純並列 read-only check 一律合併。
+
+## 等機器重開（mandatory）
+
+等遠端機器重開回來時，輪詢迴圈裡**不得**出現 `ssh`／`sshpass`——每一圈只用 `nc -z -G 5 <host> <ssh_port>` 看 port（SSH port 不一定是 22，先確認）：先等到 port 掉（跑滿次數仍沒掉就停下回報，不往下走），再等 port 回來。之後只登入**一次**讀 boot_id（重開後要做的第一批唯讀檢查併進同一個 heredoc），這次登入不丟 stderr、不接 pipe，`$?` 單獨一行。拿到新 boot_id 才算完成；拿到舊的回到「等 port 掉」；其他任何結果（sshpass exit 5 認證失敗、空輸出、連線錯誤）都停下交給使用者，不再試。認證失敗後，這組 credential 在本 session 對這台 host 視為失效：之後對它的任何 ssh／scp（不論指令內容、是否還在等重開）都不得再用，`.last-success` 命中它也一樣。credential 來自 `arx-host-config.md`〈#3〉的清單時，清單裡其他 credential 照 #3 各試一次；其餘情況只能用使用者在失敗之後提供的新密碼（回覆裡給的，或更新後的 hosts.yaml）。
+
+理由：重開過程中可用的密碼可能和重開前不同，迴圈每一圈登入就是一次認證失敗；host 若跑 fail2ban，幾分鐘內就累積到門檻、封鎖本機 IP。port 檢查不送密碼。
+
+```bash
+# ❌ 每一圈都登入
+for i in $(seq 1 60); do SSHPASS="$PW" sshpass -e ssh user@host 'cat /proc/sys/kernel/random/boot_id'; sleep 10; done
+
+# ✓ 先等 port 掉、再等 port 回來，回來後只登入一次，結果完整留下（run_in_background：總長可能超過 600 秒）
+PORT=22   # 以這台的實際 SSH port 為準；舊 boot_id 在下 reboot 前先讀好
+LOG=/tmp/bootid.$$.log
+down=0; for i in $(seq 1 60); do nc -z -G 5 host "$PORT" || { down=1; break; }; sleep 5; done
+[ "$down" = 1 ] || { echo "port 沒掉，停下回報"; exit 1; }
+up=0; for i in $(seq 1 120); do nc -z -G 5 host "$PORT" && { up=1; break; }; sleep 5; done
+[ "$up" = 1 ] || { echo "port 沒回來，停下回報"; exit 1; }
+SSHPASS="$PW" sshpass -e ssh -p "$PORT" user@host 'cat /proc/sys/kernel/random/boot_id' > "$LOG" 2>&1
+echo "exit=$?"; cat "$LOG"
+```
 
 ## 遠端檔案傳輸
 

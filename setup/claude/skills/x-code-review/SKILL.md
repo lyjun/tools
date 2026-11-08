@@ -73,8 +73,8 @@ read its output:
   appear as inverted diffs.
 - **Base** — the left side of an explicit range, else `origin/develop`, `develop`, `origin/main`, `main` (first that exists), or the remote HEAD branch. The `origin/` ref wins because the main clone's local branch is often unpulled, which would pull teammates' merged commits into the range; a `NOTE:` line says when the two differ.
 - **Changed files** — printed **unfiltered**. Generated and lock files are excluded by the
-  Step 2 subagent, not here: the exclusion patterns live in the coding-standards references,
-  and Step 2 item 3 is the only place those get loaded. Filtering here would mean matching
+  Step 2 subagent, not here: the exclusion patterns live in `x-coding-standards`' own SKILL.md,
+  which Step 2 item 1 loads. Filtering here would mean matching
   against a list this context has never read.
 
 Two things the script reports but does not decide:
@@ -113,7 +113,7 @@ Using the branch info and changed file list from Step 1, launch a single Agent t
 - the **diff range**
 - the list of changed filenames, said explicitly to be **unfiltered** (the subagent does its own generated/lock exclusion in item 1, and cannot tell a raw list from a filtered one by looking at it)
 - **the repo's absolute path** — always, taken from the `PROJECT=` line Step 0's script printed. Every command in item 2 — the per-package fetch loop, `git show`, `git blame` — runs in the subagent's own cwd, and the script's own `cd` lived only inside that one Bash call. Whenever the repo sits in a subdirectory (Step 0's single-repo branch, and Step 3X's per-project loop) cwd is *not* a repo, so a bare `git` call there either fails or, worse, succeeds in the wrong repo. Step 2X already passes project paths for exactly this reason.
-- **the absolute path `${CLAUDE_SKILL_DIR}/references/angles.md`** (write it out in full — every mention of `references/angles.md` below is shorthand for this path, and a subagent resolving the short form against the repo cwd finds nothing), with the instruction to read it before FIND. It holds two FIND angles, the sweep pass, and the re-review recheck; the subagent never sees this SKILL.md, so a criterion that lives only there and is not named in the prompt does not run.
+- **the absolute path `${CLAUDE_SKILL_DIR}/references/angles.md`** (write it out in full — every mention of `references/angles.md` below is shorthand for this path, and a subagent resolving the short form against the repo cwd finds nothing), with the instruction to read it before FIND. It holds three FIND angles, the sweep pass, and the re-review recheck; the subagent never sees this SKILL.md, so a criterion that lives only there and is not named in the prompt does not run.
 - **in explicit-range mode: the four read commands of item 2 with both refs filled in** (`git show <right>:<path>`, `git show <left>:<path>`, `git blame <right> -- <path>`, `git grep <symbol> <right>`, with the actual ref names). Item 2 states the rule; this bullet is what makes it reach the prompt — `angles.md` defers to "the read mode the orchestrator gave you", and without it there is none.
 - when this run is a **Step 4 auto-fix re-review**: that fact, **and every issue that survived the previous round as findings text** (not diff content, so the rule above does not apply) — withheld ones included, each tagged `withheld`. Tell the subagent to run the recheck section of `angles.md` in place of the sweep; that section carries the whole procedure, because the subagent cannot read this file. Without the list, a sweep-found or withheld issue is not looked for again, the count drops, and Step 4 reports success on an unfixed issue.
 - when the caller is a PR review: **the PR reference as a runnable command** — `gh pr view <num> -R <owner>/<repo>` (gh does not parse `<owner>/<repo>#<num>`; it reads it as a branch name and fails) and any additional finding gates it requires. `x-pr-review` mandates that its eight verification gates ride along, and two of them cannot be evaluated without the PR — one quotes the PR description, one needs cross-repo evidence. Pass the reference, not the fetched body: the subagent runs `gh pr view` itself, which keeps this rule and the no-diff-content rule from colliding. **Those gates go into the prompt after this skill's own FIND/VERIFY/sweep instructions, labelled as additional gates on the survivors** — this bullet is where they arrive, not where they are placed. Putting them ahead of FIND/VERIFY reads as a competing verdict scheme and the subagent has to guess which one governs.
@@ -196,7 +196,7 @@ are owned by a separate cleanup pass — do NOT flag them here.
 
 ### Additional review checks (apply as a FIND-phase angle)
 
-- **The two angles in `references/angles.md`** — wrapper / proxy correctness, and language pitfalls (with its `go.mod` version check). Its last two sections, the sweep and the re-review recheck, run after VERIFY (Phase 3), not here.
+- **The three angles in `references/angles.md`** — wrapper / proxy correctness, language pitfalls (with its `go.mod` version check), and guarantees the change relies on (with its path list, which also binds any dismissal that rests on such a guarantee). Its last two sections, the sweep and the re-review recheck, run after VERIFY (Phase 3), not here.
 
 - **Removed-behavior audit**: For every line the diff DELETES or replaces, name the invariant or behavior that line enforced, then search the new code for where it is re-established. If you cannot find it, that is a candidate. Reading only the `+` side can never surface this class — every added line is individually correct and the defect is the *absence* of a line. A candidate qualifies only with all three of: (1) the deleted line quoted with its `file:line`, (2) what it guaranteed, (3) where you searched and did not find it re-established — name the symbol you grepped and the files you read. A candidate missing (3) is unrefutable, so drop it here in FIND — do not pass it to VERIFY.
 - **Silent failure detection**: Flag error handling that makes the code behave incorrectly — empty catch/except blocks swallowing an error the caller needs, error callbacks that do nothing, ignored return values from fallible operations (e.g., `_ = riskyOp()`), inverted error checks that skip the error path entirely (e.g., `if err == nil { use(result) }` instead of `if err != nil { return err }; use(result)`), an error that is only logged before execution continues as if the call succeeded, a default or zero value returned in place of an error the caller needed (e.g., `if err != nil { log.Warn(err); return Config{}, nil }`), and a retry loop that exhausts its attempts and then returns nil or nothing. For these last three, the failure scenario names the code that proceeds as if the call succeeded — the caller, or a later statement in the same function — and what goes wrong (e.g., a `Reconcile` that logs a failed status update and returns `ctrl.Result{}, nil`, so the object is never requeued). (Purely stylistic anti-patterns like un-wrapped `return err`, and logging *and* returning the same error, are out of scope here. The "either return or log" convention in `x-coding-standards` is style and never refutes one of these three.)
@@ -263,6 +263,11 @@ Output only the surviving issues (CONFIRMED + PLAUSIBLE). Classify each by **sev
 ## Fixed since last round        # auto-fix re-review only
 - [file_path:line_number] <previous issue> — fixed by `<line>`
 
+## Relied-on guarantees          # when the guarantees angle in references/angles.md applied, or a dismissal rests on a guarantee
+- <the guarantee> — provided by <function> (<file_path:line>)
+  - <file_path:line> <the success path> — holds: <line that makes it hold> | does not hold → issue above, or refuted by <line>
+- <the guarantee> — provided by <function> — not listed — unchecked     # a dismissal made without the path list
+
 ## Coverage                      # only when a file was read in regions (item 2)
 - <file_path>: lines <a>-<b>, <c>-<d>
 
@@ -308,11 +313,17 @@ Display the final review result to the user using **exactly** this format. Do no
 ## Fixed since last round        # auto-fix re-review only
 - [file_path:line_number] <previous issue> — fixed by `<line>`
 
+## Relied-on guarantees          # only when the subagent wrote it
+(as the subagent wrote it)
+
+## Coverage                      # only when the subagent wrote it
+(as the subagent wrote it)
+
 ## Summary
 (from review subagent, including its final independence line)
 ```
 
-Omit severity subsections that have no issues. Keep the subagent's `## Coverage` section when it wrote one, just before Summary. Where a finding carries the two citation lines (rule text, violating line), reproduce them as the subagent wrote them — do not fold them back into a one-line summary.
+Omit severity subsections that have no issues. Where a finding carries the two citation lines (rule text, violating line), reproduce them as the subagent wrote them — do not fold them back into a one-line summary.
 
 **If Step 0's script reported `Mode: incremental`**, prepend a notice before the Issues section (the short hash comes from that same line — `Mode: incremental (since last review at <short-hash>)`):
 
@@ -392,7 +403,7 @@ for dir in <detected project dirs>; do
 done
 ```
 
-Pass each project's changed-file list on **unfiltered** — the Step 2X subagent excludes generated and lock files, for the same reason as the single-project path: the exclusion patterns are in the coding-standards references, which this context never loads.
+Pass each project's changed-file list on **unfiltered** — the Step 2X subagent excludes generated and lock files, for the same reason as the single-project path: the exclusion patterns are in `x-coding-standards`' own SKILL.md, which this context never loads.
 
 A project that printed `ERROR: no base branch` is not empty — name it to the user as unreviewed; an empty `BASE` would have run `"...HEAD"`, which git answers with exit 0 and no output, so the project would have looked unchanged. Skip only projects whose **raw** diff is empty; if every project's raw diff is empty, inform the user and stop. A project whose diff turns out to be nothing but generated files cannot be detected here — Step 2X reports that one back after filtering.
 
