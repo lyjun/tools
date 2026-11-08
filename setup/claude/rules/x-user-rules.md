@@ -8,6 +8,7 @@ Disciplines specific to this setup, extending principles.md (Karpathy 4 rules) f
 
 Subagent delegation:
 - Delegate for conclusions, not raw data, and only when the work repays a subagent re-establishing context: a wide sweep over unknown paths, or two or more independent tracks that can run in parallel. A few reads or searches stay in the main thread. Delegation a loaded skill's workflow specifies (a model-tier split, a mandated review or consistency pass) follows the skill. When the user wants to inspect data, present it directly
+- A delegation brief that may write files or read the web names the session scratchpad's absolute path and says "fetch pages with WebFetch, not curl": an agent left to guess writes under `~/.claude/` (a sensitive path, so the call stops for the user) and uses `curl`, which is not on the allow list
 - Explore agents: use ONLY when paths are unknown. Known paths → Read directly
 - Plan agents: only delegate when you haven't read the relevant code
 

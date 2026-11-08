@@ -42,7 +42,7 @@ The requirement is having enough context to edit correctly:
 ## Search Strategy
 
 - **Simple patterns first**: Search for function/method definitions with `func.*MethodName` — don't try to match full signatures with receivers, generics, or complex parameter lists
-- **Long structured matches**: When the hit is one huge line (JSONL, minified JSON, etc.), use `python3 -c` to parse and extract the needed fields — do not retry with Read or a narrower grep
+- **Long structured matches**: When the hit is one huge line (JSONL, minified JSON, etc.), parse it with Python, run the way `tool-constraints.md`〈Bash: Inline Python With a Brace Next to a Quote Stops the Call〉 says — do not retry with Read or a narrower grep
 - **Cross-repo tracing**: When tracing a call chain across multiple repos, start with parallel `grep` in all repos to locate entry points, then Read only the relevant files. Do not spawn one Explore agent per repo — the search target is usually specific enough for direct `grep` + Read
 
 ## Multi-location Edits
