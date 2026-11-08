@@ -284,7 +284,7 @@ If the branch name does not match any of these prefixes, inform the user and ask
 Push and create the PR:
 
 ```bash
-git push -u origin $CURRENT_BRANCH
+git push -u origin <branch printed by the Branch: line above>
 ```
 
 ```bash

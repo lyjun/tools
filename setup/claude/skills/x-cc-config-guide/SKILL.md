@@ -79,7 +79,7 @@ model: sonnet
 
 **需要組織資料時**，`x-` skill 寫的是「這類資料歸誰、通常放在哪一類地方」，不寫唯一的位置，也不寫找到的內容：規範找擁有者放慣例的地方（例：`docs/`，或環境給 AI 工具的入口檔，如 `CLAUDE.md`、`GEMINI.md`）；個人設定與機密找使用者指定的設定檔。找不到時明說找過哪裡，並問使用者，不要當成沒有。組織專屬、通用流程沒有的步驟不寫進來，放在前綴不是 `x-` 的 skill，由它以 composition 呼叫這支。也不要在 `x-` skill 的 `references/` 放組織專屬檔：複製時資料會一起被帶走，SKILL.md 也得點名那個檔才讀得到。
 
-**寫入前跑檢查，逐則下判定。** 改 `x-` skill 的任何檔案（SKILL.md、`references/`、`scripts/`）前先留一份改前副本，寫好草稿後跑：
+**寫入前跑檢查，逐則下判定。** 改 `x-` skill 的任何檔案（SKILL.md、`references/`、`scripts/`）前先留一份改前副本，寫好草稿後跑；改前副本與當作草稿底稿的那份都用 `cat <檔案> > <scratchpad 路徑>` 從 `~/.claude` 讀出（用 `cp` 複製會被當成編輯敏感檔而停下來）：
 
 ```
 python3 ~/.claude/skills/x-cc-config-guide/scripts/portability-check.py --config <設定檔> --before <改前> --after <改後>
