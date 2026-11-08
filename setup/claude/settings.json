@@ -110,7 +110,7 @@
           },
           {
             "type": "command",
-            "command": "python3 ~/.claude/hooks/no-path-vars.py",
+            "command": "python3 ~/.claude/hooks/bash-shape-gate.py",
             "timeout": 5
           }
         ]
